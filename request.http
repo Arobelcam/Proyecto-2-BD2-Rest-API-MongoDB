@@ -2,19 +2,70 @@
 POST http://localhost:5000/usuario/ HTTP/1.1
 Content-Type: application/json
 
-
+[
   {
-    "nombre": "Juan Mazariegos",
-    "email": "mazajuanz@example.com",
-    "telefono": "3555-3234",
+    "nombre": "Dulce Mazariegos",
+    "email": "mazadulce@example.com",
+    "telefono": "2155-3114",
     "direccion": {
       "calle": "5ta avenida 19-35",
       "ciudad": "Ciudad de Guatemala"
     },
+    "preferencias": ["Mexicana", "Sushi"]
+  },
+  {
+    "nombre": "Jeremy Sanchez",
+    "email": "jeremisanch@example.com",
+    "telefono": "2222-3224",
+    "direccion": {
+      "calle": "4ta avenida 10-31",
+      "ciudad": "Ciudad de Guatemala"
+    },
+    "preferencias": ["Mexicana", "Tacos"]
+  },
+  {
+    "nombre": "Lucia Mendoza",
+    "email": "mendilu@example.com",
+    "telefono": "2115-1134",
+    "direccion": {
+      "calle": "3ra avenida 18-25",
+      "ciudad": "Mixco"
+    },
     "preferencias": ["Mexicana", "Tacos"]
   }
-
+]
 
 ###
 GET http://localhost:5000/usuario/ HTTP/1.1
 
+###
+PUT http://localhost:5000/usuario/ HTTP/1.1
+Content-Type: application/json
+
+[
+  {
+    "id": "6814154fc226a79e41bc9aed",
+    "email": "dulcealva@mail.com",
+    "preferencias": ["Coreana"]
+  },
+  {
+    "id": "681413162b2e9adda6cdc9ce",
+    "nombre": "Vanesa Morales",
+    "email": "vamora@mail.com",
+    "direccion": {
+      "calle": "1ra calle 12-42",
+      "ciudad": "Mixco"
+    }
+  }
+]
+
+
+###
+DELETE http://localhost:5000/usuario/ HTTP/1.1
+Content-Type: application/json
+
+[
+{ "id": "6814154fc226a79e41bc9aee" },
+{ "id": "681413812b2e9adda6cdc9cf" },
+{ "id": "681414a6c226a79e41bc9aeb" }
+]

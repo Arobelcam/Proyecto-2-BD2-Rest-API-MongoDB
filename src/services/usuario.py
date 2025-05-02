@@ -141,3 +141,147 @@ def eliminar_usuarios_servicio():
         "mensaje": f"{resultado.deleted_count} usuario(s) eliminado(s) correctamente",
         "ids_eliminados": [str(id) for id in ids_limpios]
     }
+    
+# Funcion para comprobacion de indices en coleccion de usuarios
+def verificar_indice_y_consultar(filtros, orden=None):
+    
+
+    # Verificación para el índice compuesto del nombre y el telefono
+    if 'nombre' in filtros and 'telefono' in filtros:
+        if 'indice_nombre_telefono_compuesto' not in mongo.db.usuarios.index_information():
+            return {"error": "Consulta no optimizada. Usa índices en 'nombre' y 'telefono'."}, 400
+
+    # Verificación para el índice de email
+    if 'email' in filtros:
+        if 'email_1' not in mongo.db.usuarios.index_information():
+            return {"error": "Consulta no optimizada. Usa el índice en 'email'."}, 400
+
+    # Verificación para el índice de 'preferencias'
+    if 'preferencias' in filtros:
+        if 'preferencias_1' not in mongo.db.usuarios.index_information():
+            return {"error": "Consulta no optimizada. Usa el índice en 'preferencias'."}, 400
+
+    # Realizar la consulta con los filtros y ordenamiento si aplica
+    usuarios = mongo.db.usuarios.find(filtros).sort(orden) if orden else mongo.db.usuarios.find(filtros)
+    return list(usuarios)
+
+# Funcion de servicio para consultas con filtros
+def get_usuarios_filtros_servicio():
+    data = request.args  # Recibe los filtros
+
+    filtros = {}
+    if 'nombre' in data:
+        filtros['nombre'] = data['nombre']
+    if 'telefono' in data:
+        filtros['telefono'] = data['telefono']
+    if 'email' in data:
+        filtros['email'] = data['email']
+    if 'preferencias' in data:
+        filtros['preferencias'] = data['preferencias']
+
+    # Verificar que la consulta utilice los índices correctos
+    resultado = verificar_indice_y_consultar(filtros)
+
+    if isinstance(resultado, tuple):  # Si retorna error
+        return resultado
+
+    return resultado
+
+
+# Funcion de servicio para consultas con proyeccion
+def get_usuarios_proyeccion_servicio():
+    data = request.args  # Recibe los filtros y proyecciones
+
+    proyeccion = {}
+    if 'nombre' in data:
+        proyeccion['nombre'] = 1
+    if 'telefono' in data:
+        proyeccion['telefono'] = 1
+    if 'email' in data:
+        proyeccion['email'] = 1
+    if 'preferencias' in data:
+        proyeccion['preferencias'] = 1
+
+    filtros = {}  # Aquí no aplicamos filtros, solo proyección
+
+    # Verificar que la consulta utilice los índices correctos
+    resultado = verificar_indice_y_consultar(filtros)
+
+    if isinstance(resultado, tuple):  # Si retorna error
+        return resultado
+
+    return resultado
+
+# Funcion de servicio para consultas con ordenamiento
+def get_usuarios_ordenamiento_servicio():
+    data = request.args  # Recibe los filtros y el ordenamiento
+
+    filtros = {}
+    orden = []
+    if 'nombre' in data:
+        filtros['nombre'] = data['nombre']
+        orden.append(('nombre', 1))
+    if 'telefono' in data:
+        filtros['telefono'] = data['telefono']
+        orden.append(('telefono', 1))
+    if 'preferencias' in data:
+        filtros['preferencias'] = data['preferencias']
+        orden.append(('preferencias', 1))
+
+    # Verificar que la consulta utilice los índices correctos
+    resultado = verificar_indice_y_consultar(filtros, orden)
+
+    if isinstance(resultado, tuple):  # Si retorna error
+        return resultado
+
+    return resultado
+
+# Funcion de servicio para consultas con skip y limit
+def get_usuarios_skip_limit_servicio():
+    data = request.args
+    skip = int(data.get('skip', 0))  # Si no hay skip, salta 0
+    limit = int(data.get('limit', 10))  # Si no hay limit, muestra 10
+
+    filtros = {}  # Si no hay filtros, pasamos un dict vacío
+
+    # Verificar que la consulta utilice los índices correctos
+    resultado = verificar_indice_y_consultar(filtros)
+
+    if isinstance(resultado, tuple):  # Si retorna error
+        return resultado
+
+    usuarios = resultado.skip(skip).limit(limit)
+    return list(usuarios)
+
+# Funcion de servicio para consulta completa
+def get_usuarios_consulta_completa_servicio():
+    data = request.args  # Recibe los filtros y el orden
+
+    filtros = {}
+    orden = []
+
+    # Filtros
+    if 'nombre' in data:
+        filtros['nombre'] = data['nombre']
+    if 'telefono' in data:
+        filtros['telefono'] = data['telefono']
+    if 'email' in data:
+        filtros['email'] = data['email']
+    if 'preferencias' in data:
+        filtros['preferencias'] = data['preferencias']
+
+    # Ordenamiento
+    if 'orden' in data:
+        orden.append(('nombre', 1))  # Ordenar por nombre (puedes cambiarlo)
+
+    # Verificar que la consulta utilice los índices correctos
+    resultado = verificar_indice_y_consultar(filtros, orden)
+
+    if isinstance(resultado, tuple):  # Si retorna error
+        return resultado
+
+    skip = int(data.get('skip', 0))  # Si no hay skip, salta 0
+    limit = int(data.get('limit', 10))  # Si no hay limit, muestra 10
+
+    usuarios = resultado.skip(skip).limit(limit)
+    return list(usuarios)
