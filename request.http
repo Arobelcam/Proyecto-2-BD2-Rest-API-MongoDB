@@ -36,9 +36,6 @@ Content-Type: application/json
 ]
 
 ###
-GET http://localhost:5000/usuario/ HTTP/1.1
-
-###
 PUT http://localhost:5000/usuario/ HTTP/1.1
 Content-Type: application/json
 
@@ -69,3 +66,43 @@ Content-Type: application/json
 { "id": "681413812b2e9adda6cdc9cf" },
 { "id": "681414a6c226a79e41bc9aeb" }
 ]
+
+###
+GET http://localhost:5000/api/filtro HTTP/1.1
+Content-Type: application/json
+
+{
+  "telefono": "554800-4930"
+}
+
+
+###
+GET http://localhost:5000/api/proyeccion?nombre=Luis%20Gómez&telefono=5678-1234 HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/api/proyeccion HTTP/1.1
+Content-Type: application/json
+
+{
+  "nombre": 1,
+  "telefono": 1,
+  "email": 1,
+  "direccion": 0,
+  "preferencias": 1
+}
+
+###
+GET http://localhost:5000/api/ordenamiento HTTP/1.1
+Content-Type: application/json
+
+{
+  "orden": [
+    ["nombre", -1],
+    ["telefono", -1]
+  ]
+}
+
+###
+GET http://localhost:5000/api/paginacion?skip=5&limit=10 HTTP/1.1
+Content-Type: application/json

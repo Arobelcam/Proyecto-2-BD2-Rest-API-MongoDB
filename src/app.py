@@ -15,7 +15,7 @@ mongo.init_app(app)
 def index():
     return render_template('index.html')
 
-app.register_blueprint(usuario, url_prefix='/usuario')
+app.register_blueprint(usuario, url_prefix='/api')
 
 if __name__ == "__main__":
     app.run(debug=True)

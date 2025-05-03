@@ -28,18 +28,18 @@ def delete_usuarios():
 def get_usuario_filtro():
     return get_usuarios_filtros_servicio()
 
-@usuario.route('/', methods=['GET'])
+@usuario.route('/proyeccion', methods=['GET'])
 def get_usuario_proyeccion():
     return get_usuarios_proyeccion_servicio()
 
-@usuario.route('/', methods=['GET'])
+@usuario.route('/ordenamiento', methods=['GET'])
 def get_usuario_ordenamiento():
     return get_usuarios_ordenamiento_servicio()
 
-@usuario.route('/', methods=['GET'])
+@usuario.route('/paginacion', methods=['GET'])
 def get_usuario_skip_limit():
     return get_usuarios_skip_limit_servicio()
 
-@usuario.route('/', methods=['GET'])
+@usuario.route('/consulta-completa', methods=['GET'])
 def get_usuario_consulta_completa():
     return get_usuarios_consulta_completa_servicio()

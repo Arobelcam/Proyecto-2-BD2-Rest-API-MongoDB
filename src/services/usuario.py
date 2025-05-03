@@ -1,7 +1,7 @@
-from flask import request, Response
+from flask import request, Response, jsonify
 from bson import json_util
 from bson import ObjectId
-
+import re
 from config.mongodb import mongo
 
 
@@ -167,32 +167,47 @@ def verificar_indice_y_consultar(filtros, orden=None):
 
 # Funcion de servicio para consultas con filtros
 def get_usuarios_filtros_servicio():
-    data = request.args  # Recibe los filtros
+    data = request.get_json()  
+    if not data:  
+        data = request.args  
 
     filtros = {}
+
     if 'nombre' in data:
-        filtros['nombre'] = data['nombre']
+        filtros['nombre'] = re.compile(f"^{data['nombre']}$", re.IGNORECASE)
+    
     if 'telefono' in data:
         filtros['telefono'] = data['telefono']
+    
     if 'email' in data:
         filtros['email'] = data['email']
+    
     if 'preferencias' in data:
         filtros['preferencias'] = data['preferencias']
 
-    # Verificar que la consulta utilice los índices correctos
-    resultado = verificar_indice_y_consultar(filtros)
+    if 'direccion' in data:
+        direccion_filtro = {}
+        
+        if 'calle' in data['direccion']:
+            direccion_filtro['calle'] = re.compile(f".*{data['direccion']['calle']}.*", re.IGNORECASE)
+        
+        if 'ciudad' in data['direccion']:
+            direccion_filtro['ciudad'] = re.compile(f".*{data['direccion']['ciudad']}.*", re.IGNORECASE)
+        
+        filtros['direccion'] = direccion_filtro
 
-    if isinstance(resultado, tuple):  # Si retorna error
-        return resultado
-
-    return resultado
+    
+    usuarios = mongo.db.usuarios.find(filtros)
+    
+    # Devolvemos los resultados en formato lista
+    return list(usuarios)
 
 
 # Funcion de servicio para consultas con proyeccion
 def get_usuarios_proyeccion_servicio():
-    data = request.args  # Recibe los filtros y proyecciones
-
+    data = request.get_json()  
     proyeccion = {}
+
     if 'nombre' in data:
         proyeccion['nombre'] = 1
     if 'telefono' in data:
@@ -202,42 +217,38 @@ def get_usuarios_proyeccion_servicio():
     if 'preferencias' in data:
         proyeccion['preferencias'] = 1
 
-    filtros = {}  # Aquí no aplicamos filtros, solo proyección
+    # Ejecutar la consulta con la proyección
+    resultado = mongo.db.usuarios.find({}, proyeccion)
 
-    # Verificar que la consulta utilice los índices correctos
-    resultado = verificar_indice_y_consultar(filtros)
+    return list(resultado)
 
-    if isinstance(resultado, tuple):  # Si retorna error
-        return resultado
-
-    return resultado
 
 # Funcion de servicio para consultas con ordenamiento
 def get_usuarios_ordenamiento_servicio():
-    data = request.args  # Recibe los filtros y el ordenamiento
+    data = request.get_json()  
+    print(f"Recibido: {data}")  
 
     filtros = {}
     orden = []
-    if 'nombre' in data:
-        filtros['nombre'] = data['nombre']
-        orden.append(('nombre', 1))
-    if 'telefono' in data:
-        filtros['telefono'] = data['telefono']
-        orden.append(('telefono', 1))
-    if 'preferencias' in data:
-        filtros['preferencias'] = data['preferencias']
-        orden.append(('preferencias', 1))
 
-    # Verificar que la consulta utilice los índices correctos
-    resultado = verificar_indice_y_consultar(filtros, orden)
+    if 'orden' in data:
+        for orden_param in data['orden']:
+            campo, direccion = orden_param
+            orden.append((campo, direccion))  # Campo y dirección para el ordenamiento (1 o -1)
 
-    if isinstance(resultado, tuple):  # Si retorna error
-        return resultado
+    if not orden:
+        return {"error": "El parámetro 'orden' no puede estar vacío."}, 400
 
-    return resultado
+   
+    resultado = mongo.db.usuarios.find(filtros).sort(orden)
+    return list(resultado)
+
 
 # Funcion de servicio para consultas con skip y limit
+from flask import request
+
 def get_usuarios_skip_limit_servicio():
+    # Obtener los parámetros de la URL
     data = request.args
     skip = int(data.get('skip', 0))  # Si no hay skip, salta 0
     limit = int(data.get('limit', 10))  # Si no hay limit, muestra 10
@@ -250,8 +261,29 @@ def get_usuarios_skip_limit_servicio():
     if isinstance(resultado, tuple):  # Si retorna error
         return resultado
 
+    # Aplicar skip y limit sobre el cursor
     usuarios = resultado.skip(skip).limit(limit)
+
+    # Convertir el cursor en una lista y devolver los resultados
     return list(usuarios)
+
+
+def verificar_indice_y_consultar(filtros):
+    # Verificamos si la consulta usa índices válidos
+    # Comprobamos que los filtros coincidan con índices
+    indices_validos = ['nombre', 'telefono', 'email', 'preferencias']
+
+    # Validación para cada campo
+    for campo in filtros.keys():
+        if campo not in indices_validos:
+            return {"error": f"El campo '{campo}' no es un campo indexado."}, 400
+
+    # Si la consulta es válida, realizamos la consulta en la base de datos y devolvemos el cursor
+    resultado = mongo.db.usuarios.find(filtros)
+
+    # Asegúrate de no convertir el resultado en lista aquí, mantenlo como cursor
+    return resultado
+
 
 # Funcion de servicio para consulta completa
 def get_usuarios_consulta_completa_servicio():
