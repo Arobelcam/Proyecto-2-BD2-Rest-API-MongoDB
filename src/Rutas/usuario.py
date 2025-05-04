@@ -10,16 +10,16 @@ def get_usuario():
 def get_usuario_by_id():
     return "Usuario with id"
 
-@usuario.route('/', methods=['POST'])
+@usuario.route('/crear', methods=['POST'])
 def create_usuarios():
     return crear_usuarios_servicio()
 
 
-@usuario.route('/', methods=['PUT'])
+@usuario.route('/actualizar', methods=['PUT'])
 def update_usuarios():
     return actualizar_usuarios_servicio()
 
-@usuario.route('/', methods=['DELETE'])
+@usuario.route('/eliminar', methods=['DELETE'])
 def delete_usuarios():
     return eliminar_usuarios_servicio()
 
