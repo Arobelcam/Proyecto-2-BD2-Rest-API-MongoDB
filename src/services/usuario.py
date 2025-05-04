@@ -203,42 +203,49 @@ def get_usuarios_filtros_servicio():
 
 # Funcion de servicio para consultas con proyeccion
 def get_usuarios_proyeccion_servicio():
-    data = request.get_json()  
-    proyeccion = {}
+    data = request.get_json()  # JSON con valores 1 y/o 0
+    includes = [f for f, v in data.items() if v == 1]
+    excludes = [f for f, v in data.items() if v == 0]
 
-    if 'nombre' in data:
-        proyeccion['nombre'] = 1
-    if 'telefono' in data:
-        proyeccion['telefono'] = 1
-    if 'email' in data:
-        proyeccion['email'] = 1
-    if 'preferencias' in data:
-        proyeccion['preferencias'] = 1
+    # Elegir modo de proyección
+    if includes:
+        # Modo inclusión: solo los campos marcados con 1
+        projection = {field: 1 for field in includes}
+    elif excludes:
+        # Modo exclusión: solo los campos marcados con 0
+        projection = {field: 0 for field in excludes}
+    else:
+        # Sin proyección explícita
+        projection = {}
 
-    resultado = mongo.db.usuarios.find({}, proyeccion)
-
+    # Ejecutar consulta
+    resultado = mongo.db.usuarios.find({}, projection)
     return list(resultado)
+
 
 
 # Funcion de servicio para consultas con ordenamiento
 def get_usuarios_ordenamiento_servicio():
-    data = request.get_json()  
-    print(f"Recibido: {data}")  
+    data = request.get_json()
+    campo = data.get('campo')
+    orden = data.get('orden')
 
-    filtros = {}
-    orden = []
+    # Validaciones
+    if not campo or orden not in (1, -1):
+        return {"error": "Debes enviar 'campo' (nombre, email, telefono) y 'orden' (1 o -1)."}, 400
 
-    if 'orden' in data:
-        for orden_param in data['orden']:
-            campo, direccion = orden_param
-            orden.append((campo, direccion))  # Campo y dirección para el ordenamiento (1 o -1)
+    # Campos permitidos para ordenar
+    campos_validos = ['nombre', 'email', 'telefono']
+    if campo not in campos_validos:
+        return {"error": f"El campo '{campo}' no es válido para ordenamiento."}, 400
 
-    if not orden:
-        return {"error": "El parámetro 'orden' no puede estar vacío."}, 400
+    try:
+        # Ejecutar la consulta con ordenamiento
+        cursor = mongo.db.usuarios.find({}).sort(campo, orden)
+        return list(cursor)
+    except Exception as e:
+        return {"error": f"Ocurrió un error al ordenar: {str(e)}"}, 500
 
-   
-    resultado = mongo.db.usuarios.find(filtros).sort(orden)
-    return list(resultado)
 
 
 # Funcion de servicio para consultas con limit
