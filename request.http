@@ -104,5 +104,10 @@ Content-Type: application/json
 }
 
 ###
-GET http://localhost:5000/api/paginacion?skip=5&limit=10 HTTP/1.1
+GET http://localhost:5000/api/limit?limit=2 HTTP/1.1
 Content-Type: application/json
+
+###
+GET http://localhost:5000/api/skip?skip=4 HTTP/1.1
+Content-Type: application/json
+

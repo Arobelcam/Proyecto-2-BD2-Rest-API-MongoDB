@@ -36,10 +36,63 @@ def get_usuario_proyeccion():
 def get_usuario_ordenamiento():
     return get_usuarios_ordenamiento_servicio()
 
-@usuario.route('/paginacion', methods=['GET'])
-def get_usuario_skip_limit():
-    return get_usuarios_skip_limit_servicio()
+@usuario.route('/limit', methods=['GET'])
+def get_usuario_limit():
+    return get_usuarios_limit_servicio()
+
+@usuario.route('/skip', methods=['GET'])
+def get_usuario_skip():
+    return get_usuarios_skip_servicio()
 
 @usuario.route('/consulta-completa', methods=['GET'])
 def get_usuario_consulta_completa():
     return get_usuarios_consulta_completa_servicio()
+
+#Rutas para consultas de agregacion
+@usuario.route('/count', methods=['GET'])
+def get_usuario_count():
+    return get_usuarios_count_servicio()
+
+@usuario.route('/distinct', methods=['GET'])
+def get_usuario_distinct():
+    return get_usuarios_distinct_servicio()
+
+@usuario.route('/match', methods=['GET'])
+def get_usuario_match():
+    return get_usuarios_match_servicio()
+
+@usuario.route('/group', methods=['GET'])
+def get_usuario_group():
+    return get_usuarios_group_servicio()
+
+#agregacion para manejo de arreglos
+@usuario.route('/push', methods=['POST'])
+def post_usuario_push():
+    return push_usuario_servicio()
+
+@usuario.route('/pull', methods=['POST'])
+def post_usuario_pull():
+    return pull_usuario_servicio()
+
+@usuario.route('/addToSet', methods=['POST'])
+def post_usuario_addToset():
+    return add_to_set_usuario_servicio()
+
+#agregacion para manejo de embeddes
+@usuario.route('/project', methods=['GET'])
+def get_usuario_project():
+    return project_usuario_servicio()
+
+@usuario.route('/unwind', methods=['GET'])
+def get_usuario_unwind():
+    return unwind_usuario_servicio()
+
+@usuario.route('/lookup', methods=['GET'])
+def get_usuario_lookup():
+    return lookup_usuario_servicio()
+
+#agreggation pipeline
+
+@usuario.route('/pipeline', methods=['GET'])
+def get_usuario_pipeline():
+    return aggregation_pipeline_servicio()

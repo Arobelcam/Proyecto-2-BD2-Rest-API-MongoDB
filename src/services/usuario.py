@@ -4,7 +4,6 @@ from bson import ObjectId
 import re
 from config.mongodb import mongo
 
-
 def get_usuario_servicio():
     data = mongo.db.usuarios.find()
     result = json_util.dumps(data)
@@ -78,9 +77,8 @@ def actualizar_usuarios_servicio():
         try:
             object_id = ObjectId(id_usuario)
         except:
-            continue  # Saltar ID no válido
+            continue  
 
-        # Construir el diccionario con los campos a actualizar
         update_fields = {}
 
         for campo in ['nombre', 'email', 'telefono', 'preferencias']:
@@ -217,7 +215,6 @@ def get_usuarios_proyeccion_servicio():
     if 'preferencias' in data:
         proyeccion['preferencias'] = 1
 
-    # Ejecutar la consulta con la proyección
     resultado = mongo.db.usuarios.find({}, proyeccion)
 
     return list(resultado)
@@ -244,36 +241,45 @@ def get_usuarios_ordenamiento_servicio():
     return list(resultado)
 
 
-# Funcion de servicio para consultas con skip y limit
-from flask import request
+# Funcion de servicio para consultas con limit
 
-def get_usuarios_skip_limit_servicio():
-    # Obtener los parámetros de la URL
+def get_usuarios_limit_servicio():
     data = request.args
-    skip = int(data.get('skip', 0))  # Si no hay skip, salta 0
-    limit = int(data.get('limit', 10))  # Si no hay limit, muestra 10
+    limit = int(data.get('limit', 10))  
+
+    filtros = {}  
+
+    resultado = verificar_indice_y_consultar(filtros)
+
+    if isinstance(resultado, tuple): 
+        return resultado
+
+    # Aplicar limit sobre el cursor
+    usuarios = resultado.limit(limit)
+
+    return list(usuarios)
+
+def get_usuarios_skip_servicio():
+    data = request.args
+    skip = int(data.get('skip', 0))  
 
     filtros = {}  # Si no hay filtros, pasamos un dict vacío
 
-    # Verificar que la consulta utilice los índices correctos
     resultado = verificar_indice_y_consultar(filtros)
 
     if isinstance(resultado, tuple):  # Si retorna error
         return resultado
 
-    # Aplicar skip y limit sobre el cursor
-    usuarios = resultado.skip(skip).limit(limit)
+    # Aplicar skip sobre el cursor
+    usuarios = resultado.skip(skip)
 
-    # Convertir el cursor en una lista y devolver los resultados
     return list(usuarios)
 
 
 def verificar_indice_y_consultar(filtros):
     # Verificamos si la consulta usa índices válidos
-    # Comprobamos que los filtros coincidan con índices
     indices_validos = ['nombre', 'telefono', 'email', 'preferencias']
 
-    # Validación para cada campo
     for campo in filtros.keys():
         if campo not in indices_validos:
             return {"error": f"El campo '{campo}' no es un campo indexado."}, 400
@@ -281,9 +287,7 @@ def verificar_indice_y_consultar(filtros):
     # Si la consulta es válida, realizamos la consulta en la base de datos y devolvemos el cursor
     resultado = mongo.db.usuarios.find(filtros)
 
-    # Asegúrate de no convertir el resultado en lista aquí, mantenlo como cursor
     return resultado
-
 
 # Funcion de servicio para consulta completa
 def get_usuarios_consulta_completa_servicio():
@@ -317,3 +321,407 @@ def get_usuarios_consulta_completa_servicio():
 
     usuarios = resultado.skip(skip).limit(limit)
     return list(usuarios)
+
+
+###   FUCIONES DE SERVICIO DE AGREGACION
+
+# Funcion de servicio para contar usuarios
+def get_usuarios_count_servicio():
+    data = request.args
+    filtros = {}
+
+    # Si el parámetro 'preferencias' está presente en la URL, lo agregamos al filtro
+    if 'preferencias' in data:
+        filtros['preferencias'] = data['preferencias']
+
+    # Si el parámetro 'nombre' está presente en la URL, lo agregamos al filtro
+    if 'nombre' in data:
+        filtros['nombre'] = data['nombre']
+
+    # Verificar que la consulta utilice los índices correctos
+    resultado = verificar_indice_y_consultar(filtros)
+
+    if isinstance(resultado, tuple):  # Si retorna error
+        return resultado
+
+    # Realizar la agregación de contar los documentos que cumplen con el filtro
+    count = mongo.db.usuarios.count_documents(filtros)
+
+    # Devolver el número de documentos encontrados
+    return {"count": count}
+
+# funcion de servicio para hacer distinciones
+def get_usuarios_distinct_servicio():
+    # Obtener los parámetros de la URL
+    data = request.args
+    campo = data.get('campo', '')  # El campo en el que se va a buscar los valores distintos
+
+    if not campo:
+        return {"error": "El parámetro 'campo' es obligatorio para realizar la consulta distinct."}, 400
+
+    # Verificar que el campo sea válido
+    campos_validos = ['preferencias', 'nombre', 'telefono', 'email']
+    if campo not in campos_validos:
+        return {"error": f"El campo '{campo}' no es válido para la operación distinct."}, 400
+
+    # Realizar la consulta de distinct en el campo especificado
+    resultado = mongo.db.usuarios.distinct(campo)
+
+    # Devolver los valores únicos encontrados
+    return {campo: resultado}
+
+# Funcion de servicio para hacer match
+def get_usuarios_match_servicio():
+    # Obtener los parámetros de la URL
+    data = request.args
+    filtros = {}
+
+    # Si el parámetro 'preferencias' está presente en la URL, lo agregamos al filtro
+    if 'preferencias' in data:
+        filtros['preferencias'] = data['preferencias']
+
+    # Si el parámetro 'nombre' está presente en la URL, lo agregamos al filtro
+    if 'nombre' in data:
+        filtros['nombre'] = data['nombre']
+
+    # Si el parámetro 'telefono' está presente en la URL, lo agregamos al filtro
+    if 'telefono' in data:
+        filtros['telefono'] = data['telefono']
+
+    # Si el parámetro 'email' está presente en la URL, lo agregamos al filtro
+    if 'email' in data:
+        filtros['email'] = data['email']
+
+    # Crear el pipeline de agregación con el operador $match
+    pipeline = [
+        {"$match": filtros}  # Aplicamos el filtro usando $match
+    ]
+    
+    # Ejecutamos el pipeline en la colección
+    resultado = mongo.db.usuarios.aggregate(pipeline)
+
+    # Convertir el cursor en una lista y devolver los resultados
+    return list(resultado)
+
+#Funcion de servicio para hacer group
+def get_usuarios_group_servicio():
+    # Obtener los parámetros de la URL
+    data = request.args
+    filtros = {}
+
+    # Si el parámetro 'preferencias' está presente, lo agregamos al filtro
+    if 'preferencias' in data:
+        filtros['preferencias'] = data['preferencias']
+
+    # Crear el pipeline de agregación con el operador $group
+    pipeline = [
+        {"$match": filtros},  # Primero aplicamos el filtro con $match
+        {"$group": {  # Luego agrupamos los resultados
+            "_id": "$preferencias",  # Agrupamos por el campo 'preferencias'
+            "total_usuarios": {"$sum": 1}  # Contamos el total de usuarios por preferencia
+        }}
+    ]
+
+    # Ejecutamos el pipeline en la colección
+    resultado = mongo.db.usuarios.aggregate(pipeline)
+
+    # Convertir el cursor en una lista y devolver los resultados
+    return list(resultado)
+
+# Funcion de servicio para hacer push
+def push_usuario_servicio():
+    # Obtener los parámetros de la URL
+    data = request.get_json()  # Obtener datos del cuerpo de la solicitud
+    usuario_id = data.get('usuario_id')  # El ID del usuario de donde se agregará el valor
+    campo = data.get('campo')  # El campo del array al que se agregará el valor
+    valor = data.get('valor')  # El valor que se agregará al array
+
+    if not usuario_id or not campo or not valor:
+        return {"error": "Faltan parámetros 'usuario_id', 'campo' o 'valor'"}, 400
+
+    # Convertir el usuario_id a ObjectId de MongoDB si es necesario
+    try:
+        usuario_id = ObjectId(usuario_id)
+    except Exception as e:
+        return {"error": f"El ID de usuario no es válido: {str(e)}"}, 400
+
+    # Validar que el campo sea uno de los esperados
+    campos_validos = ['nombre', 'telefono', 'email', 'preferencias', 'direccion']
+    if campo not in campos_validos:
+        return {"error": f"El campo '{campo}' no es válido."}, 400
+
+    # Verificar si el campo es "preferencias" o no es un arreglo
+    if campo != 'preferencias':
+        usuario = mongo.db.usuarios.find_one({"_id": usuario_id})
+        if not isinstance(usuario.get(campo), list):
+            return {"error": f"El campo '{campo}' no es un arreglo. No se puede usar el operador $push."}, 400
+
+    # Realizar la operación $push para agregar el valor al array del campo correspondiente
+    resultado = mongo.db.usuarios.update_one(
+        {"_id": usuario_id},  # Filtro para el usuario por ID
+        {"$push": {campo: valor}}  # Agregar el valor al array del campo
+    )
+
+    # Verificar si se modificó el documento
+    if resultado.matched_count > 0:
+        return {"message": f"{valor} agregado exitosamente a {campo}."}
+    else:
+        return {"error": "Usuario no encontrado."}, 404
+
+#Funcion de servicio para hacer pull
+def pull_usuario_servicio():
+    # Obtener los parámetros de la URL
+    data = request.get_json()  # Obtener datos del cuerpo de la solicitud
+    usuario_id = data.get('usuario_id')  # El ID del usuario
+    campo = data.get('campo')  # El campo del array del que se eliminará el valor
+    valor = data.get('valor')  # El valor que se eliminará del array
+
+    if not usuario_id or not campo or not valor:
+        return {"error": "Faltan parámetros 'usuario_id', 'campo' o 'valor'"}, 400
+
+    # Convertir el usuario_id a ObjectId de MongoDB si es necesario
+    try:
+        usuario_id = ObjectId(usuario_id)
+    except Exception as e:
+        return {"error": f"El ID de usuario no es válido: {str(e)}"}, 400
+
+    # Validar que el campo sea uno de los esperados
+    campos_validos = ['nombre', 'telefono', 'email', 'preferencias', 'direccion']
+    if campo not in campos_validos:
+        return {"error": f"El campo '{campo}' no es válido."}, 400
+
+    # Verificar si el campo es "preferencias" o no es un arreglo
+    if campo != 'preferencias':
+        usuario = mongo.db.usuarios.find_one({"_id": usuario_id})
+        if not isinstance(usuario.get(campo), list):
+            return {"error": f"El campo '{campo}' no es un arreglo. No se puede usar el operador $pull."}, 400
+
+    # Realizar la operación $pull para eliminar el valor del array del campo correspondiente
+    resultado = mongo.db.usuarios.update_one(
+        {"_id": usuario_id},  # Filtro para el usuario por ID
+        {"$pull": {campo: valor}}  # Eliminar el valor del array del campo
+    )
+
+    # Verificar si se modificó el documento
+    if resultado.matched_count > 0:
+        return {"message": f"{valor} eliminado exitosamente de {campo}."}
+    else:
+        return {"error": "Usuario no encontrado."}, 404
+
+
+#Funcion de servicio para hacer uso de AddToSet
+def add_to_set_usuario_servicio():
+    # Obtener los parámetros de la URL
+    data = request.get_json()  # Obtener datos del cuerpo de la solicitud
+    usuario_id = data.get('usuario_id')  # El ID del usuario
+    campo = data.get('campo')  # El campo del array al que se agregará el valor
+    valor = data.get('valor')  # El valor que se agregará al array
+
+    if not usuario_id or not campo or not valor:
+        return {"error": "Faltan parámetros 'usuario_id', 'campo' o 'valor'"}, 400
+
+    # Convertir el usuario_id a ObjectId de MongoDB si es necesario
+    try:
+        usuario_id = ObjectId(usuario_id)
+    except Exception as e:
+        return {"error": f"El ID de usuario no es válido: {str(e)}"}, 400
+
+    # Validar que el campo sea uno de los esperados
+    campos_validos = ['nombre', 'telefono', 'email', 'preferencias', 'direccion']
+    if campo not in campos_validos:
+        return {"error": f"El campo '{campo}' no es válido."}, 400
+
+    # Verificar si el campo es "preferencias" o no es un arreglo
+    if campo != 'preferencias':
+        usuario = mongo.db.usuarios.find_one({"_id": usuario_id})
+        if not isinstance(usuario.get(campo), list):
+            return {"error": f"El campo '{campo}' no es un arreglo. No se puede usar el operador $addToSet."}, 400
+
+    # Verificar si el valor ya existe en el array para evitar duplicados
+    usuario = mongo.db.usuarios.find_one({"_id": usuario_id})
+    if usuario and valor in usuario.get(campo, []):
+        return {"message": f"El valor '{valor}' ya está presente en el campo '{campo}', no se agregó."}
+
+    # Realizar la operación $addToSet para agregar el valor al array del campo correspondiente
+    resultado = mongo.db.usuarios.update_one(
+        {"_id": usuario_id},  # Filtro para el usuario por ID
+        {"$addToSet": {campo: valor}}  # Agregar el valor al array del campo
+    )
+
+    # Verificar si se modificó el documento
+    if resultado.matched_count > 0:
+        return {"message": f"{valor} agregado exitosamente a {campo}."}
+    else:
+        return {"error": "Usuario no encontrado."}, 404
+
+### FUNCIONES DE SERVICIO PARA MANEJO DE DOCUMENTOS EMBEDDED
+#Funcion de servicio para hacer project
+def project_usuario_servicio():
+    # Obtener los parámetros de la URL
+    data = request.get_json()  # Obtener datos del cuerpo de la solicitud
+    usuario_id = data.get('usuario_id')  # El ID del usuario
+    campos_proyectados = data.get('campos')  # Los campos a proyectar (como una lista de cadenas)
+
+    if not usuario_id or not campos_proyectados:
+        return {"error": "Faltan parámetros 'usuario_id' o 'campos'"}, 400
+
+    # Convertir el usuario_id a ObjectId de MongoDB si es necesario
+    try:
+        usuario_id = ObjectId(usuario_id)
+    except Exception as e:
+        return {"error": f"El ID de usuario no es válido: {str(e)}"}, 400
+
+    # Realizar la operación $project para seleccionar los campos deseados
+    try:
+        # Creamos un diccionario con los campos a proyectar
+        campos_dict = {campo: 1 for campo in campos_proyectados}  # Todos los campos seleccionados se proyectan con valor 1
+
+        # Realizar la consulta con $project
+        usuario = mongo.db.usuarios.find_one({"_id": usuario_id}, campos_dict)
+
+        if usuario:
+            return {"usuario": usuario}
+        else:
+            return {"error": "Usuario no encontrado."}, 404
+    except Exception as e:
+        return {"error": f"Error al realizar la proyección: {str(e)}"}, 500
+
+#Funcion de servicio para hacer unwind
+def unwind_usuario_servicio():
+    # Obtener los parámetros de la URL
+    data = request.get_json()  # Obtener datos del cuerpo de la solicitud
+    usuario_id = data.get('usuario_id')  # El ID del usuario
+    campo = data.get('campo')  # El campo de arreglo que se va a descomponer
+
+    if not usuario_id or not campo:
+        return {"error": "Faltan parámetros 'usuario_id' o 'campo'"}, 400
+
+    # Convertir el usuario_id a ObjectId de MongoDB si es necesario
+    try:
+        usuario_id = ObjectId(usuario_id)
+    except Exception as e:
+        return {"error": f"El ID de usuario no es válido: {str(e)}"}, 400
+
+    # Validar que el campo sea un arreglo
+    campos_validos = ['preferencias']  # Se espera que el campo sea "preferencias" o cualquier otro arreglo definido
+    if campo not in campos_validos:
+        return {"error": f"El campo '{campo}' no es válido para la operación de unwind."}, 400
+
+    # Realizar la operación $unwind para descomponer el arreglo
+    try:
+        # Realizar la consulta con $unwind
+        pipeline = [
+            {"$match": {"_id": usuario_id}},  # Filtramos el documento por ID
+            {"$unwind": f"${campo}"}  # Aplicamos el unwind al campo específico
+        ]
+        
+        resultado = list(mongo.db.usuarios.aggregate(pipeline))  # Ejecutamos la agregación
+
+        if resultado:
+            return {"usuario_descompuesto": resultado}
+        else:
+            return {"error": "Usuario no encontrado."}, 404
+    except Exception as e:
+        return {"error": f"Error al realizar el unwind: {str(e)}"}, 500
+    
+#Funcion de servicio para hacer lookup
+from bson import ObjectId  # Importar ObjectId desde bson
+
+def lookup_usuario_servicio():
+    # Obtener los parámetros de la solicitud
+    data = request.get_json()  # Obtener datos del cuerpo de la solicitud
+    usuario_id = data.get('usuario_id')  # El ID del usuario para hacer el lookup
+    coleccion_lookup = data.get('coleccion_lookup')  # El nombre de la colección con la que hacer el join
+    campo_local = data.get('campo_local')  # El campo en la colección actual para hacer el join
+    campo_foreign = data.get('campo_foreign')  # El campo en la colección de lookup para hacer el join
+
+    # Validar que todos los parámetros estén presentes
+    if not usuario_id or not coleccion_lookup or not campo_local or not campo_foreign:
+        return {"error": "Faltan parámetros 'usuario_id', 'coleccion_lookup', 'campo_local' o 'campo_foreign'"}, 400
+
+    # Convertir el usuario_id a ObjectId de MongoDB
+    try:
+        usuario_id = ObjectId(usuario_id)  # Intentamos convertir a ObjectId
+    except Exception as e:
+        return {"error": f"El ID de usuario no es válido: {str(e)}"}, 400
+
+    # Realizar la operación de agregación con $lookup
+    try:
+        pipeline = [
+            {
+                "$lookup": {
+                    "from": coleccion_lookup,  # Colección con la que se hace el join
+                    "localField": campo_local,  # Campo de la colección actual
+                    "foreignField": campo_foreign,  # Campo de la colección a buscar
+                    "as": "informacion_combinada"  # Nombre del campo donde se guardarán los resultados
+                }
+            },
+            {
+                "$match": {"_id": usuario_id}  # Filtrar por el usuario_id convertido a ObjectId
+            },
+            {
+                "$project": {
+                    "nombre": 1,                # Mostrar el nombre del usuario
+                    "email": 1,                 # Mostrar el email del usuario
+                    "informacion_combinada": 1  # Mostrar los documentos combinados de pedidos
+                }
+            }
+        ]
+
+        # Ejecutar la agregación
+        resultado = list(mongo.db.usuarios.aggregate(pipeline))  # Ejecutar la pipeline de agregación
+
+        if resultado:
+            return {"usuario_con_info": resultado}
+        else:
+            return {"error": "Usuario no encontrado."}, 404
+    except Exception as e:
+        return {"error": f"Error al realizar el lookup: {str(e)}"}, 500
+
+#Funcion de servicio de agreggation pipeline basado en las preferencias de comdia del usuario
+def aggregation_pipeline_servicio():
+    # Obtener los parámetros de la solicitud
+    data = request.get_json()
+    preferencias = data.get('preferencias')    # Preferencias a filtrar (por ejemplo: ["comida", "deportes"])
+    sort_order = data.get('sort_order', -1)  # Orden (1 para ascendente, -1 para descendente)
+    limit = data.get('limit', 5)  # Limite de resultados
+
+    # Validaciones de entrada
+    if not preferencias:
+        return {"error": "El campo 'preferencias' es requerido."}, 400
+    if not isinstance(preferencias, list):
+        return {"error": "'preferencias' debe ser una lista."}, 400
+    if not isinstance(sort_order, int) or sort_order not in [-1, 1]:
+        return {"error": "'sort_order' debe ser 1 (ascendente) o -1 (descendente)."}, 400
+    if not isinstance(limit, int) or limit <= 0:
+        return {"error": "'limit' debe ser un número entero mayor a 0."}, 400
+
+    try:
+        # Construir la pipeline de agregación
+        pipeline = [
+            # Filtrar usuarios por las preferencias seleccionadas
+            { "$match": { "preferencias": { "$in": preferencias } } },
+            
+            # Agrupar por preferencias y contar los usuarios
+            { "$group": { "_id": "$preferencias", "total_usuarios": { "$sum": 1 } } },
+            
+            # Proyectar las preferencias y el total de usuarios
+            { "$project": { "_id": 1, "total_usuarios": 1 } },
+            
+            # Ordenar por la cantidad de usuarios (total_usuarios) en el orden especificado
+            { "$sort": { "total_usuarios": sort_order } },
+            
+            # Limitar los resultados según el parámetro 'limit'
+            { "$limit": limit }
+        ]
+
+        # Ejecutar la agregación en la colección 'usuarios'
+        resultado = list(mongo.db.usuarios.aggregate(pipeline))
+
+        if resultado:
+            return {"resultado": resultado}
+        else:
+            return {"error": "No se encontraron resultados para los criterios especificados."}, 404
+    
+    except Exception as e:
+        return {"error": f"Error al ejecutar la pipeline: {str(e)}"}, 500
