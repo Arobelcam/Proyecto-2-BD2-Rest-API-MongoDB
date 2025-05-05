@@ -41,11 +41,135 @@ def crear_usuario():
         # Puedes devolver un status code 201 si creaste con éxito
         return jsonify(resultado), 201
     return render_template('crear_usuario.html')
+### CONSULTAS
 
 @app.route('/api/consultas')
 def consultas_usuarios():
     # esta será la landing de consultas: match vs aggregation
     return render_template('consultas_usuarios.html')
+
+### CONSULTAS A DOCUMENTOS
+@app.route('/api/consultas/consul-documentos')
+def consultas_documentos_usuarios():
+    return render_template('consultas_documentos_usuarios.html')
+
+@app.route('/api/consultas/consul-documentos')
+def consultas_filtro_usuarios():
+    return render_template('consultas_documentos_usuarios.html')
+
+# — Filtro —
+@app.route('/api/consultas/consul-documentos/filtro', methods=['GET', 'POST'])
+def filtro_usuario():
+    if request.method == 'POST':
+        resultado = get_usuarios_filtros_servicio()
+        return jsonify(resultado)
+    return render_template('filtro_usuarios.html')
+
+
+# — Proyección —
+@app.route('/api/consultas/consul-documentos/proyeccion', methods=['GET', 'POST'])
+def proyeccion_usuario():
+    if request.method == 'POST':
+        resultado = get_usuarios_proyeccion_servicio()
+        return jsonify(resultado)
+    return render_template('proyeccion_usuarios.html')
+
+
+# — Ordenamiento —
+@app.route('/api/consultas/consul-documentos/ordenamiento', methods=['GET', 'POST'])
+def ordenamiento_usuario():
+    if request.method == 'POST':
+        resultado = get_usuarios_ordenamiento_servicio()
+        return jsonify(resultado)
+    return render_template('ordenamiento_usuarios.html')
+
+
+# — Limit —
+@app.route('/api/consultas/consul-documentos/limit', methods=['GET', 'POST'])
+def limit_usuario():
+    # Si es POST (desde formulario JSON) o viene el query param `limit`, devolvemos datos
+    if request.method == 'POST' or 'limit' in request.args:
+        resultado = get_usuarios_limit_servicio()
+        return jsonify(resultado)
+    # Si es GET sin limit, sirvo la página HTML
+    return render_template('limit_usuarios.html')
+
+
+# — Skip —
+@app.route('/api/consultas/consul-documentos/skip', methods=['GET', 'POST'])
+def skip_usuario():
+    if request.method == 'POST' or 'skip' in request.args:
+        resultado = get_usuarios_skip_servicio()
+        return jsonify(resultado)
+    # Si es GET sin skips, sirvo la página HTML
+    return render_template('skip_usuarios.html')
+
+
+### CONSULTAS POR AGREGACION
+@app.route('/api/consultas/consul-agregacion')
+def consultas_agregacion_usuarios():
+    return render_template('consultas_agregacion_usuarios.html')
+
+### simples
+@app.route('/api/consultas/consul-agregacion/simple')
+def agregacion_simple_usuarios():
+    return render_template('agregacion_simple_usuarios.html')
+
+# — Match —  
+@app.route('/api/consultas/consul-agregacion/simple/match', methods=['GET', 'POST'])
+def match_usuario():
+    if request.method == 'POST' or bool(request.args):
+        resultado = get_usuarios_match_servicio()
+        return jsonify(resultado)
+    return render_template('match_usuarios.html')
+
+# — Group —  
+@app.route('/api/consultas/consul-agregacion/simple/group', methods=['GET', 'POST'])
+def group_usuario():
+    if request.method == 'POST' or bool(request.args):
+        resultado = get_usuarios_group_servicio()
+        return jsonify(resultado)
+    return render_template('group_usuarios.html')
+
+# — Count — 
+@app.route('/api/consultas/consul-agregacion/simple/count', methods=['GET', 'POST'])
+def count_usuario():
+    # Si llega body JSON o query params no vacíos, llamamos al servicio
+    if request.method == 'POST' or bool(request.args):
+        # tu servicio lee request.get_json() o request.args
+        resultado = get_usuarios_count_servicio()
+        return jsonify(resultado)
+    return render_template('count_usuarios.html')
+
+# — Distinct —
+@app.route('/api/consultas/consul-agregacion/simple/distinct', methods=['GET', 'POST'])
+def distinct_usuario():
+    if request.method == 'POST' or bool(request.args):
+        resultado = get_usuarios_distinct_servicio()
+        return jsonify(resultado)
+    return render_template('distinct_usuarios.html')
+
+
+### agg pipeline
+@app.route('/api/consultas/consul-agregacion/pipeline', methods=['GET', 'POST'])
+def pipeline_usuarios():
+    if request.method == 'POST':
+        pipeline_definition = request.get_json()             # JSON con la definición de la pipeline
+        resultado = aggregation_pipeline_servicio(pipeline_definition)
+        return jsonify(resultado), 200
+
+    # Si es GET, mostramos el formulario para construir la pipeline
+    return render_template('pipeline_usuarios.html')
+
+### arrays
+@app.route('/api/consultas/consul-agregacion/arrays')
+def agregacion_arrays_usuarios():
+    return render_template('agregacion_arrays_usuarios.html')
+
+### embedded
+@app.route('/api/consultas/consul-agregacion/embedded')
+def agregacion_embedded_usuarios():
+    return render_template('agregacion_embedded_usuarios.html')
 
 @app.route('/api/actualizar', methods=['GET', 'PUT'])
 def actualizar_usuario():

@@ -3,7 +3,7 @@
 {% block content %}
   <h2 class="section-title">Consulta de usuarios</h2>
   <div class="menu-grid">
-    <a href="#" class="menu-grid__btn">Consultas a documentos usuarios</a>
-    <a href="#" class="menu-grid__btn">Consultas con agregacion usuarios</a>
+    <a href="{{ url_for('consultas_documentos_usuarios') }}" class="menu-grid__btn">Consultas a documentos usuarios</a>
+    <a href="{{ url_for('consultas_agregacion_usuarios') }}" class="menu-grid__btn">Consultas con agregacion usuarios</a>
   </div>
 {% endblock %}

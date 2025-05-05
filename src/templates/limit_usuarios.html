@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Limit de Usuarios – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consulta de limit documentos de usuarios</h2>
+  <form id="limit-form" class="form-grid">
+    <label for="limit">Cantidad limit</label>
+    <input type="number" id="limit" name="limit" placeholder="Solo números" min="1" required>
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('limit-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      const limitValue = ev.target.limit.value.trim();
+      if (!/^[0-9]+$/.test(limitValue) || parseInt(limitValue, 10) < 1) {
+        errorDiv.textContent = 'Por favor ingresa un número válido mayor que cero.';
+        return;
+      }
+
+      try {
+        const resp = await fetch(`{{ url_for('limit_usuario') }}?limit=${limitValue}`, {
+          method: 'GET'
+        });
+        if (!resp.ok) throw new Error('Error en la petición');
+        const data = await resp.json();
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        errorDiv.textContent = 'Error al generar la consulta.';
+      }
+    });
+  </script>
+{% endblock %}

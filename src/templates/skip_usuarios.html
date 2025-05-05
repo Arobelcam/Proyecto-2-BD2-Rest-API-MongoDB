@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Skip de Usuarios – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consulta de skip en documentos de usuarios</h2>
+  <form id="skip-form" class="form-grid">
+    <label for="skip">Cantidad a saltar</label>
+    <input type="number" id="skip" name="skip" placeholder="Solo números" min="0" required>
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('skip-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      const skipValue = ev.target.skip.value.trim();
+      if (!/^[0-9]+$/.test(skipValue) || parseInt(skipValue, 10) < 0) {
+        errorDiv.textContent = 'Por favor ingresa un número válido (0 o mayor).';
+        return;
+      }
+
+      try {
+        const resp = await fetch(`{{ url_for('skip_usuario') }}?skip=${skipValue}`, {
+          method: 'GET'
+        });
+        if (!resp.ok) throw new Error('Error en la petición');
+        const data = await resp.json();
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        errorDiv.textContent = 'Error al generar la consulta.';
+      }
+    });
+  </script>
+{% endblock %}

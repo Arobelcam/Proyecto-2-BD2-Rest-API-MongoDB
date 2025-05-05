@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Consultas por agregación manerjo de arrays Usuarios – API Restaurante{% endblock %}
+{% block content %}
+  <h2 class="section-title">Consulta por agregación manejo de arrays usuarios</h2>
+  <div class="menu-grid">
+    <a href="{{ url_for('agregacion_simple_usuarios') }}" class="menu-grid__btn">Pull</a>
+    <a href="{{ url_for('agreggation_pipeline_usuarios') }}" class="menu-grid__btn">Push</a>
+    <a href="{{ url_for('agregacion_arrays_usuarios') }}" class="menu-grid__btn">AddToSet</a>
+  </div>
+{% endblock %}

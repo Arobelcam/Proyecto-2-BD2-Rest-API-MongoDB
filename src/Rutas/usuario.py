@@ -44,10 +44,6 @@ def get_usuario_limit():
 def get_usuario_skip():
     return get_usuarios_skip_servicio()
 
-@usuario.route('/consulta-completa', methods=['GET'])
-def get_usuario_consulta_completa():
-    return get_usuarios_consulta_completa_servicio()
-
 #Rutas para consultas de agregacion
 @usuario.route('/count', methods=['GET'])
 def get_usuario_count():

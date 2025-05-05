@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Match de Usuarios – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consultas por agregación - $match</h2>
+  <form id="match-form" class="form-grid">
+    <label for="campo">Campo a hacer match</label>
+    <input type="text" id="campo" name="campo" placeholder="nombre, email, telefono o preferencias" required>
+
+    <label for="valor">Valor</label>
+    <input type="text" id="valor" name="valor" placeholder="Valor para el match" required>
+
+    <button type="submit" class="menu-grid__btn">Hacer agregación</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('match-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const campo = ev.target.campo.value.trim();
+      const valor = ev.target.valor.value.trim();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      const validos = ['nombre','email','telefono','preferencias'];
+      if (!validos.includes(campo)) {
+        if (campo === 'direccion') {
+          errorDiv.textContent = 'Consulta rechazada porque el campo no contiene índices existentes.';
+        } else {
+          errorDiv.textContent = `El campo "${campo}" no es válido para match.`;
+        }
+        return;
+      }
+
+      // Construir query string para GET
+      const params = new URLSearchParams();
+      params.append(campo, valor);
+      const url = `{{ url_for('match_usuario') }}?${params.toString()}`;
+
+      try {
+        const resp = await fetch(url, { method: 'GET' });
+        if (!resp.ok) {
+          const err = await resp.json();
+          throw new Error(err.error || 'Error en la petición');
+        }
+        const data = await resp.json();
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        errorDiv.textContent = err.message;
+      }
+    });
+  </script>
+{% endblock %}

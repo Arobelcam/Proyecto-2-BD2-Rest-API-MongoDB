@@ -1,9 +1,113 @@
 {% extends 'base.html' %}
-{% block title %}Crear Usuarios – API Restaurante{% endblock %}
+
+{% block title %}Crear Usuario – API Restaurante{% endblock %}
+
 {% block content %}
-  <h2 class="section-title">Crear Usuarios</h2>
-  <form action="{{ url_for('crear_usuario') }}" method="post" class="form-grid">
-    <!-- aquí tus inputs: nombre, email, teléfono, etc. -->
-    <button type="submit" class="menu-grid__btn">Crear usuario/s</button>
-  </form>
+  <h2 class="section-title">Crear Usuario</h2>
+  <div class="form-grid">
+    <!-- Paso 1: Indicar cantidad de usuarios -->
+    <label for="user-count">Cantidad de usuarios a crear</label>
+    <input type="number" id="user-count" min="1" placeholder="Ingresa número de usuarios" required>
+  </div>
+
+  <!-- Contenedor dinámico para los formularios individuales -->
+  <div id="form-container"></div>
+
+  <!-- Botones de navegación -->
+  <div class="actions">
+    <button id="next-btn" class="menu-grid__btn" disabled>Siguiente</button>
+    <button id="create-btn" class="menu-grid__btn" style="display:none;">Crear Usuarios</button>
+  </div>
+
+  <!-- Mensaje de resultado -->
+  <div id="message" class="message"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const countInput = document.getElementById('user-count');
+      const formContainer = document.getElementById('form-container');
+      const nextBtn = document.getElementById('next-btn');
+      const createBtn = document.getElementById('create-btn');
+      const messageDiv = document.getElementById('message');
+
+      let totalCount = 0;
+      let currentIndex = 0;
+      const usersData = [];
+
+      countInput.addEventListener('input', () => {
+        totalCount = parseInt(countInput.value, 10) || 0;
+        usersData.length = 0;
+        currentIndex = 0;
+        messageDiv.textContent = '';
+        formContainer.innerHTML = '';
+        nextBtn.disabled = totalCount < 1;
+        nextBtn.style.display = totalCount > 0 ? 'inline-block' : 'none';
+        createBtn.style.display = 'none';
+      });
+
+      nextBtn.addEventListener('click', () => {
+        const formEl = formContainer.querySelector('form');
+        // Si no hay formulario aún, generamos el primero
+        if (!formEl) {
+          generateForm();
+          return;
+        }
+        // Leer datos del formulario actual
+        const formData = new FormData(formEl);
+        const userObj = {
+          nombre: formData.get('nombre').trim(),
+          email: formData.get('email').trim(),
+          telefono: formData.get('telefono').trim(),
+          direccion: {
+            calle: formData.get('calle').trim(),
+            ciudad: formData.get('ciudad').trim()
+          },
+          preferencias: formData.get('preferencias')
+            .split(',')
+            .map(s => s.trim())
+            .filter(s => s)
+        };
+        usersData.push(userObj);
+        currentIndex++;
+
+        if (currentIndex < totalCount) {
+          generateForm();
+        } else {
+          // Todos los formularios completados
+          formContainer.innerHTML = '';
+          nextBtn.style.display = 'none';
+          createBtn.style.display = 'inline-block';
+        }
+      });
+
+      createBtn.addEventListener('click', async () => {
+        try {
+          const resp = await fetch('{{ url_for('crear_usuario') }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(usersData)
+          });
+          const result = await resp.json();
+          messageDiv.textContent = result.mensaje || `Se crearon ${usersData.length} usuario(s) correctamente.`;
+          createBtn.disabled = true;
+        } catch (err) {
+          messageDiv.textContent = 'Error al crear usuarios.';
+        }
+      });
+
+      function generateForm() {
+        formContainer.innerHTML = `
+          <form class="form-grid">
+            <h3>Usuario ${currentIndex + 1} de ${totalCount}</h3>
+            <input type="text" name="nombre" placeholder="Nombre completo" required>
+            <input type="email" name="email" placeholder="Correo electrónico" required>
+            <input type="text" name="telefono" placeholder="Teléfono" required>
+            <input type="text" name="calle" placeholder="Calle" required>
+            <input type="text" name="ciudad" placeholder="Ciudad" required>
+            <input type="text" name="preferencias" placeholder="Preferencias (coma-separadas)">
+          </form>
+        `;
+      }
+    });
+  </script>
 {% endblock %}

@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Filtro de Usuarios – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consulta de filtro documentos de usuarios</h2>
+  <form id="filter-form" class="form-grid">
+    <label for="campo">Campo a filtrar</label>
+    <input type="text" id="campo" name="campo" placeholder="nombre, email, telefono, direccion o preferencias" required>
+
+    <label for="valor">Valor</label>
+    <input type="text" id="valor" name="valor" placeholder="Valor a buscar" required>
+
+    <button type="submit" class="menu-grid__btn">Realizar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('filter-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const campo = ev.target.campo.value.trim();
+      const valor = ev.target.valor.value.trim();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // Validar campo
+      const validos = ['nombre','email','telefono','direccion','preferencias'];
+      if (!validos.includes(campo)) {
+        errorDiv.textContent = 'El campo "' + campo + '" no existe en la colección de usuarios.';
+        return;
+      }
+      if (campo === 'direccion') {
+        errorDiv.textContent = 'Consulta rechazada porque campo no contiene índices registrados.';
+        return;
+      }
+
+      // Preparar payload JSON
+      const payload = {};
+      payload[campo] = valor;
+
+      try {
+        const resp = await fetch('{{ url_for('filtro_usuario') }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!resp.ok) {
+          throw new Error('Error en la petición');
+        }
+        const data = await resp.json();
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        errorDiv.textContent = 'Error al realizar la consulta.';
+      }
+    });
+  </script>
+{% endblock %}

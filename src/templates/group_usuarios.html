@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Group de Usuarios – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consultas por agregación - $group</h2>
+  <form id="group-form" class="form-grid">
+    <label for="campo">Campo a agrupar (preferencias)</label>
+    <input type="text" id="campo" name="campo" placeholder="solo 'preferencias'" required>
+
+    <label for="valor">Valor de filtro (opcional)</label>
+    <input type="text" id="valor" name="valor" placeholder="Valor para match" >
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('group-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const campo = ev.target.campo.value.trim();
+      const valor = ev.target.valor.value.trim();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // Solo 'preferencias' es válido para group
+      if (campo !== 'preferencias') {
+        errorDiv.textContent = `El campo "${campo}" no es válido para agrupación.`;
+        return;
+      }
+
+      // Construir query string
+      let url = `{{ url_for('group_usuario') }}`;
+      if (valor) {
+        const params = new URLSearchParams();
+        params.append(campo, valor);
+        url += `?${params.toString()}`;
+      }
+
+      try {
+        const resp = await fetch(url, { method: 'GET' });
+        if (!resp.ok) {
+          const err = await resp.json();
+          throw new Error(err.error || 'Error en la petición');
+        }
+        const data = await resp.json();
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        errorDiv.textContent = err.message;
+      }
+    });
+  </script>
+{% endblock %}

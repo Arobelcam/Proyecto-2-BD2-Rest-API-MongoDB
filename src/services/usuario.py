@@ -296,40 +296,6 @@ def verificar_indice_y_consultar(filtros):
 
     return resultado
 
-# Funcion de servicio para consulta completa
-def get_usuarios_consulta_completa_servicio():
-    data = request.args  # Recibe los filtros y el orden
-
-    filtros = {}
-    orden = []
-
-    # Filtros
-    if 'nombre' in data:
-        filtros['nombre'] = data['nombre']
-    if 'telefono' in data:
-        filtros['telefono'] = data['telefono']
-    if 'email' in data:
-        filtros['email'] = data['email']
-    if 'preferencias' in data:
-        filtros['preferencias'] = data['preferencias']
-
-    # Ordenamiento
-    if 'orden' in data:
-        orden.append(('nombre', 1))  # Ordenar por nombre (puedes cambiarlo)
-
-    # Verificar que la consulta utilice los índices correctos
-    resultado = verificar_indice_y_consultar(filtros, orden)
-
-    if isinstance(resultado, tuple):  # Si retorna error
-        return resultado
-
-    skip = int(data.get('skip', 0))  # Si no hay skip, salta 0
-    limit = int(data.get('limit', 10))  # Si no hay limit, muestra 10
-
-    usuarios = resultado.skip(skip).limit(limit)
-    return list(usuarios)
-
-
 ###   FUCIONES DE SERVICIO DE AGREGACION
 
 # Funcion de servicio para contar usuarios
