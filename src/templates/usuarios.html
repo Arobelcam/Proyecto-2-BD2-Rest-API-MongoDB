@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Usuarios – API Restaurante{% endblock %}
+{% block content %}
+  <h2 class="section-title">Página de usuarios</h2>
+  <div class="menu-grid">
+    <a href="{{ url_for('crear_usuario') }}" class="menu-grid__btn">Crear Usuarios</a>
+    <a href="{{ url_for('consultas_usuarios') }}" class="menu-grid__btn">Consultas Usuarios</a>
+    <a href="{{ url_for('actualizar_usuario') }}" class="menu-grid__btn">Actualizar Usuarios</a>
+    <a href="{{ url_for('eliminar_usuario') }}" class="menu-grid__btn">Borrar Usuarios</a>
+  </div>
+{% endblock %}

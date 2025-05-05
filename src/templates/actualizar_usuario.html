@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Actualizar Usuario – API Restaurante{% endblock %}
+{% block content %}
+  <h2 class="section-title">Actualizar Usuarios</h2>
+  <form action="{{ url_for('actualizar_usuario') }}" method="post" class="form-grid">
+    <!-- aquí tus inputs: nombre, email, teléfono, etc. -->
+    <button type="submit" class="menu-grid__btn">Actualizar usuario/s</button>
+  </form>
+{% endblock %}

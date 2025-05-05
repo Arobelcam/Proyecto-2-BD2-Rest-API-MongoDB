@@ -1,12 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <h1>Rest API con Mongodb Restaurante</h1>
-</body>
-</html>
+{% extends 'base.html' %}
+{% block title %}Inicio – API Restaurante{% endblock %}
+{% block content %}
+  <div class="menu-grid">
+    <a href="{{ url_for('home_usuarios') }}" class="menu-grid__btn">Usuario</a>
+    <a href="{{ url_for('home_restaurantes') }}" class="menu-grid__btn">Restaurante</a>
+    <a href="{{ url_for('home_menu') }}" class="menu-grid__btn">Menú</a>
+    <a href="{{ url_for('home_pedidos') }}" class="menu-grid__btn">Pedidos</a>
+    <a href="{{ url_for('home_resenas') }}" class="menu-grid__btn">Reseñas</a>
+  </div>
+{% endblock %}
+

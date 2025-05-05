@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}API Restaurante{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <header class="header">
+    <h1 class="header__title">REST API MONGO DB RESTAURANTE</h1>
+    <nav class="header__nav">
+      <a href="{{ url_for('index') }}" class="nav__link">Inicio</a>
+      <a href="{{ url_for('home_usuarios') }}" class="nav__link">Usuario</a>
+      <a href="{{ url_for('home_restaurantes') }}" class="nav__link">Restaurante</a>
+      <a href="{{ url_for('home_menu') }}" class="nav__link">Menú</a>
+      <a href="{{ url_for('home_pedidos') }}" class="nav__link">Pedidos</a>
+      <a href="{{ url_for('home_resenas') }}" class="nav__link">Reseñas</a>
+    </nav>
+  </header>
+  <main class="main">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
