@@ -1,37 +1,38 @@
+//USUARIOS ----------------------------------------------
 ###
 POST http://localhost:5000/api/crear HTTP/1.1
 Content-Type: application/json
 
 [
   {
-    "nombre": "Dulce Mazariegos",
-    "email": "mazadulce@example.com",
-    "telefono": "2155-3114",
+    "nombre": "Brandon Aguilar",
+    "email": "branaguilar@example.com",
+    "telefono": "3355-3114",
     "direccion": {
-      "calle": "5ta avenida 19-35",
+      "calle": "5ta avenida 9-35",
       "ciudad": "Ciudad de Guatemala"
     },
-    "preferencias": ["Mexicana", "Sushi"]
+    "preferencias": ["Mexicana", "griega"]
   },
   {
-    "nombre": "Jeremy Sanchez",
-    "email": "jeremisanch@example.com",
-    "telefono": "2222-3224",
+    "nombre": "Jonathan Sanchez",
+    "email": "jonatsanch@example.com",
+    "telefono": "2112-3569",
     "direccion": {
       "calle": "4ta avenida 10-31",
-      "ciudad": "Ciudad de Guatemala"
-    },
-    "preferencias": ["Mexicana", "Tacos"]
-  },
-  {
-    "nombre": "Lucia Mendoza",
-    "email": "mendilu@example.com",
-    "telefono": "2115-1134",
-    "direccion": {
-      "calle": "3ra avenida 18-25",
       "ciudad": "Mixco"
     },
-    "preferencias": ["Mexicana", "Tacos"]
+    "preferencias": ["China", "guatemalteca"]
+  },
+  {
+    "nombre": "Elisa Varela",
+    "email": "elivarel@example.com",
+    "telefono": "2555-1794",
+    "direccion": {
+      "calle": "3ra avenida 18-25",
+      "ciudad": "Antigua"
+    },
+    "preferencias": ["Japonesa", "Tacos"]
   }
 ]
 
@@ -41,14 +42,14 @@ Content-Type: application/json
 
 [
   {
-    "id": "6814154fc226a79e41bc9aed",
-    "email": "dulcealva@mail.com",
-    "preferencias": ["Coreana"]
+    "id": "6817d33352f2aa7590859190",
+    "email": "braguila@mail.com",
+    "preferencias": ["Coreana", "guatemalteca"]
   },
   {
-    "id": "681413162b2e9adda6cdc9ce",
-    "nombre": "Vanesa Morales",
-    "email": "vamora@mail.com",
+    "id": "6817d33352f2aa7590859191",
+    "nombre": "Jonathan Benitez",
+    "email": "jonatben@mail.com",
     "direccion": {
       "calle": "1ra calle 12-42",
       "ciudad": "Mixco"
@@ -61,18 +62,16 @@ Content-Type: application/json
 DELETE http://localhost:5000/api/eliminar HTTP/1.1
 Content-Type: application/json
 
-[
-{ "id": "6814154fc226a79e41bc9aee" },
-{ "id": "681413812b2e9adda6cdc9cf" },
-{ "id": "681414a6c226a79e41bc9aeb" }
-]
+
+{ "id": "6817d33352f2aa7590859190" }
+
 
 ###
 GET http://localhost:5000/api/filtro HTTP/1.1
 Content-Type: application/json
 
 {
-  "telefono": "554800-4930"
+  "preferencias": "China"
 }
 
 ###
@@ -190,3 +189,648 @@ Content-Type: application/json
     "sort_order": 1,                           
     "limit": 10                                   
 }
+
+
+//RESTAURANTES -------------------------------------------------------------------
+###
+POST http://localhost:5000/restaurante/crear_r HTTP/1.1
+Content-Type: application/json
+
+[
+    {
+        "nombre": "Restaurante Costa Rica",
+        "descripcion": "Restaurante especializado en comida tica.",
+        "calificacion": 4.5,
+        "tipo_cocina": ["costarricense"],
+        "direccion": {
+            "calle": "1ra calle 11-23",
+            "ciudad": "Ciudad de Guatemala"
+        },
+        "ubicacion": {
+            "type": "Point",
+            "coordinates": [-90.123456, 14.123456]
+        },
+        "categoria": "Comida local"
+    },
+    {
+        "nombre": "Restaurante la flor",
+        "descripcion": "amplia variedad de platillos locales.",
+        "calificacion": 4.7,
+        "tipo_cocina": ["guatemalteca"],
+        "direccion": {
+            "calle": "Calle 5ta 45",
+            "ciudad": "Antigua Guatemala"
+        },
+        "ubicacion": {
+            "type": "Point",
+            "coordinates": [-90.734567, 14.553210]
+        },
+        "categoria": "Comida local"
+    }
+]
+
+###
+PUT http://localhost:5000/restaurante/actualizar_r HTTP/1.1
+Content-Type: application/json
+
+[
+    {
+        "id": "68194e2ea53eead3861a528e", 
+        "nombre": "Restaurante Actualizado 2", 
+        "descripcion": "Nuevo restaurante de comida mexicana", 
+        "calificacion": 4.8, 
+        "tipo_cocina": ["mexicana", "italiana"],
+        "direccion": {"calle": "Av. Reforma 123", "ciudad": "Ciudad de Guatemala"},
+        "ubicacion": {"type": "Point", "coordinates": [-92.123456, 16.123456]},
+        "categoria": "Gastronomía"
+    },
+    {
+        "id": "68194e2ea53eead3861a528d", 
+        "nombre": "Restaurante CR", 
+        "descripcion": "Nuevo restaurante de comida CR"
+    }
+
+]
+
+###
+DELETE http://localhost:5000/restaurante/eliminar_r HTTP/1.1
+Content-Type: application/json
+
+[
+{
+    "id": "68194d68a53eead3861a528b"
+},
+{
+    "id": "68194e2ea53eead3861a528d"
+}
+]
+
+###
+GET http://localhost:5000/restaurante/filtro_r HTTP/1.1
+Content-Type: application/json
+
+{
+  "tipo_cocina": ["Mexicana"]
+}
+
+###
+GET http://localhost:5000/restaurante/proyeccion_r HTTP/1.1
+Content-Type: application/json
+
+{
+  "nombre": 1,
+  "descripcion": 0,
+  "calificacion": 1,
+  "tipo_cocina": 0,
+  "direccion": 1,
+  "ubicacion": 0,
+  "categoria": 1
+}
+
+###
+GET http://localhost:5000/restaurante/ordenamiento_r HTTP/1.1
+Content-Type: application/json
+
+{
+  "campo": "calificacion",
+  "orden": -1
+}
+
+###
+GET http://localhost:5000/restaurante/limit_r?limit=2 HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/restaurante/skip_r?skip=2 HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/restaurante/count_r?tipo_cocina=Mexicana HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/restaurante/distinct_r?campo=tipo_cocina HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/restaurante/match_r?calificacion=4.9 HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/restaurante/group_r?tipo_cocina=China HTTP/1.1
+Content-Type: application/json
+
+###
+POST http://localhost:5000/restaurante/push_r HTTP/1.1
+Content-Type: application/json
+
+{
+  "restaurante_id": "6812e83c05bca841df20d82a", 
+  "campo": "tipo_cocina", 
+  "valor": "Vegana"
+}
+
+###
+POST http://localhost:5000/restaurante/pull_r HTTP/1.1
+Content-Type: application/json
+
+{
+  "restaurante_id": "6812e83c05bca841df20d82a", 
+  "campo": "tipo_cocina", 
+  "valor": "Vegana"
+}
+
+###
+POST http://localhost:5000/restaurante/addToSet_r HTTP/1.1
+Content-Type: application/json
+
+{
+  "restaurante_id": "6812e83c05bca841df20d82a", 
+  "campo": "tipo_cocina", 
+  "valor": "Mexicana"
+}
+
+###
+GET http://localhost:5000/restaurante/project_r HTTP/1.1
+Content-Type: application/json
+
+{
+    "restaurante_id": "6812e83c05bca841df20d82a",  
+    "campos": ["nombre", "descripcion", "direccion.calle", "tipo_cocina"]  
+}
+
+###
+GET http://localhost:5000/restaurante/unwind_r HTTP/1.1
+Content-Type: application/json
+
+{
+    "restaurante_id": "6812e83c05bca841df20d82a",  
+    "campo": "tipo_cocina" 
+}
+
+###
+GET http://localhost:5000/restaurante/lookup_r HTTP/1.1
+Content-Type: application/json
+
+{
+    "restaurante_id": "6812cb4e9a17c6abbef3bb01",
+    "coleccion_lookup": "pedidos",
+    "campo_local": "_id", 
+    "campo_foreign": "IdRestaurante"
+}
+
+###
+GET http://localhost:5000/restaurante/pipeline_r HTTP/1.1
+Content-Type: application/json
+
+{
+  "tipo_cocina": ["China", "asiatica"],
+  "sort_order": 1,
+  "limit": 10
+}                                
+
+/// MENU----------------------------------------------------------------------
+###
+POST http://localhost:5000/menu/crear_m HTTP/1.1
+Content-Type: application/json
+
+[
+  {
+    "IdRestaurante": "6812e83c05bca841df20d829", 
+    "nombre_plato": "Pizza Margherita", 
+    "precio": 100.99, 
+    "categoria": "Plato fuerte", 
+    "descripcion": "Deliciosa pizza con tomate, mozzarella y albahaca.",
+    "ingredientes": ["tomate", "mozzarella", "albahaca", "aceite de oliva"]
+  },
+  {
+    "IdRestaurante": "6812e83c05bca841df20d829",
+    "nombre_plato": "Spaghetti Carbonara",
+    "precio": 80.5,
+    "categoria": "Plato fuerte",
+    "descripcion": "Espaguetis con salsa carbonara.",
+    "ingredientes": ["espaguetis", "huevo", "panceta", "queso parmesano"]
+  }
+]
+
+###
+PUT http://localhost:5000/menu/actualizar_m HTTP/1.1
+Content-Type: application/json
+
+[
+  {
+    "id": "68196e9b64a435ae106bb6ff", 
+    "nombre_plato": "Pizza Margerita Grande", 
+    "precio": 140.99, 
+    "categoria": "Plato fuerte", 
+    "descripcion": "Pizza grande con tomate, mozzarella y albahaca.",
+    "ingredientes": ["tomate", "mozzarella", "albahaca", "aceite de oliva", "masa gruesa"]
+  },
+  {
+    "id": "68196e9b64a435ae106bb700", 
+    "nombre_plato": "Pasta Bolognesa" 
+  }
+]
+
+###
+DELETE http://localhost:5000/menu/eliminar_m HTTP/1.1
+Content-Type: application/json
+
+{
+    "id": "68196e9b64a435ae106bb700"
+}
+
+###
+GET http://localhost:5000/menu/filtro_m?ingredientes=pollo HTTP/1.1
+Content-Type: application/json
+
+
+
+###
+GET http://localhost:5000/menu/proyeccion_m HTTP/1.1
+Content-Type: application/json
+
+{
+  "IdRestaurante": 0,
+  "nombre_plato": 1,
+  "descripcion": 0,
+  "precio": 1,
+  "categoria": 1,
+  "ingredientes": 1
+}
+
+###
+GET http://localhost:5000/menu/ordenamiento_m HTTP/1.1
+Content-Type: application/json
+
+{
+  "campo": "categoria",
+  "orden": -1
+}
+###
+GET http://localhost:5000/menu/limit_m?limit=5 HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/menu/skip_m?skip3 HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/menu/count_m?ingredientes=pollo HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/menu/distinct_m?campo=nombre_plato HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/menu/match_m?precio=95.55 HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/menu/group_m?categoria=Postre HTTP/1.1
+Content-Type: application/json
+
+###
+POST http://localhost:5000/menu/push_m HTTP/1.1
+Content-Type: application/json
+
+{
+  "menu_id": "68130f3005bca841df20d89d", 
+  "campo": "ingredientes", 
+  "valor": "queso"
+}
+
+###
+POST http://localhost:5000/menu/pull_m HTTP/1.1
+Content-Type: application/json
+
+{
+  "menu_id": "68130f3005bca841df20d89d", 
+  "campo": "ingredientes", 
+  "valor": "queso"
+}
+
+###
+POST http://localhost:5000/menu/addToSet_m HTTP/1.1
+Content-Type: application/json
+
+{
+  "menu_id": "68130f3005bca841df20d89d", 
+  "campo": "ingredientes", 
+  "valor": "queso"
+}
+###
+GET http://localhost:5000/menu/project_m HTTP/1.1
+Content-Type: application/json
+
+{
+    "menu_id": "68130f3005bca841df20d89d",  
+    "campos": ["nombre_plato", "descripcion", "categoria", "precio"]  
+}
+
+###
+GET http://localhost:5000/menu/unwind_m HTTP/1.1
+Content-Type: application/json
+
+{
+    "menu_id": "68130f3005bca841df20d89d",  
+    "campo": "ingredientes" 
+}
+
+###
+GET http://localhost:5000/menu/lookup_m HTTP/1.1
+Content-Type: application/json
+
+{
+    "menu_id": "6812d107e2998c04b16a8e12",
+    "coleccion_lookup": "pedidos",
+    "campo_local": "_id", 
+    "campo_foreign": "items.IdPlato"
+}
+
+###
+GET http://localhost:5000/menu/pipeline_m HTTP/1.1
+Content-Type: application/json
+
+{
+  "categorias": ["Plato fuerte"],
+  "sort_order": 1,
+  "limit": 10
+} 
+
+//// PEDIDOS -------------------------------------------------------------------
+###
+POST http://localhost:5000/pedidos/crear_p HTTP/1.1
+Content-Type: application/json
+
+[
+  {
+    "IdUsuario": "6812ef8705bca841df20d871",
+    "IdRestaurante": "6812cb4e9a17c6abbef3bb01",
+    "items": [
+      { "IdPlato": "6812d107e2998c04b16a8e12", "cantidad": 1, "precio": 95.55 }
+    ],
+    "total": 95.55,
+    "fecha_pedido": "2025-05-05T18:30:00",
+    "estado": "pendiente"
+  },
+
+  {
+    "IdUsuario": "6812ef8705bca841df20d871",
+    "IdRestaurante": "6812cb4e9a17c6abbef3bb01",
+    "items": [
+      { "IdPlato": "6812d107e2998c04b16a8e12", "cantidad": 2, "precio": 95.55 }
+    ],
+    "total": 191.10,
+    "fecha_pedido": "2025-04-05T18:30:00",
+    "estado": "entregado"
+  }
+]
+###
+PUT http://localhost:5000/pedidos/actualizar_p HTTP/1.1
+Content-Type: application/json
+
+[
+  {
+    "id": "6819936f313ebc1ea14ec4f9",
+    "IdUsuario": "6812ef8705bca841df20d871",
+    "IdRestaurante": "6812cb4e9a17c6abbef3bb01",
+    "items": [
+      { "IdPlato": "6812d107e2998c04b16a8e12", "cantidad": 1, "precio": 95.55 }
+    ],
+    "total": 95.55,
+    "fecha_pedido": "2025-04-05T18:30:00",
+    "estado": "entregado"
+  },
+
+  {
+    "id": "6819936f313ebc1ea14ec4fa",
+    "IdUsuario": "6812ef8705bca841df20d871",
+    "IdRestaurante": "6812cb4e9a17c6abbef3bb01",
+    "items": [
+      { "IdPlato": "6812d107e2998c04b16a8e12", "cantidad": 3, "precio": 95.55 }
+    ],
+    "total": 301.10,
+    "fecha_pedido": "2024-04-05T18:30:00",
+    "estado": "entregado"
+  }
+]
+
+###
+DELETE http://localhost:5000/pedidos/eliminar_p HTTP/1.1
+Content-Type: application/json
+
+{
+    "id": "6819936f313ebc1ea14ec4fa"
+}
+###
+GET http://localhost:5000/pedidos/filtro_p?total=130.83 HTTP/1.1
+Content-Type: application/json
+
+
+
+###
+GET http://localhost:5000/pedidos/proyeccion_p HTTP/1.1
+Content-Type: application/json
+
+{
+  "IdUsuario":0,
+  "IdRestaurante": 0,
+  "items": 1,
+  "total": 1,
+  "fecha_pedido": 1,
+  "estado": 1
+}
+
+###
+GET http://localhost:5000/pedidos/ordenamiento_p HTTP/1.1
+Content-Type: application/json
+
+{
+  "campo": "total",
+  "orden": 1
+}
+###
+GET http://localhost:5000/pedidos/limit_p?limit=1 HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/pedidos/skip_p?skip=15 HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/pedidos/count_p?estado=entregado HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/pedidos/distinct_p?campo=fecha_pedido HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/pedidos/match_p?fecha_pedido=2025-04-01T00:00:00 HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/pedidos/group_p?campo=estado HTTP/1.1
+Content-Type: application/json
+###
+POST http://localhost:5000/pedidos/push_p HTTP/1.1
+Content-Type: application/json
+
+{
+  "pedido_id": "64d000000000000000000013",
+  "item": {
+    "IdPlato": "6812d107e2998c04b16a8e12",
+    "cantidad": 2,
+    "precio": 100.5
+  }
+}
+
+###
+POST http://localhost:5000/pedidos/pull_p HTTP/1.1
+Content-Type: application/json
+
+{
+  "pedido_id": "64d000000000000000000013",
+  "IdPlato": "6812d107e2998c04b16a8e12"
+}
+
+###
+POST http://localhost:5000/pedidos/addToSet_p HTTP/1.1
+Content-Type: application/json
+
+{
+  "pedido_id": "64d000000000000000000013",
+  "item": {
+    "IdPlato": "68130f3005bca841df20d88c",
+    "cantidad": 3,
+    "precio": 150.5
+  }
+}
+###
+GET http://localhost:5000/pedidos/lookup_p HTTP/1.1
+Content-Type: application/json
+
+{
+    "pedido_id": "6812d37f3797097318043fca",
+    "coleccion_lookup": "reseñas",
+    "campo_local": "_id", 
+    "campo_foreign": "IdPedido"
+}
+
+###
+GET http://localhost:5000/pedidos/pipeline_p HTTP/1.1
+Content-Type: application/json
+
+{
+  "estado": "agendado",
+  "sort_by": "cantidad",
+  "limit": 10
+}
+/// RESEÑAS ------------------------------------------------------------------------------------------------------------
+###
+POST http://localhost:5000/reseñas/crear_re HTTP/1.1
+Content-Type: application/json
+
+[
+  {
+    "IdUsuario": "60e5f8a2d1e4c53a2b7b1c45",
+    "IdRestaurante": "60d5c6f768e3b5f7a2d08c09",
+    "IdPedido": "60f7d9b4e3a2c6d4e8f12345",
+    "calificacion": 5,
+    "comentario": "¡Excelente atención!",
+    "fecha": "2025-05-06T14:30:00"
+  },
+  {
+    "IdUsuario": "60e5f8a2d1e4c53a2b7b1c46",
+    "IdRestaurante": "60d5c6f768e3b5f7a2d08c09",
+    "IdPedido": "60f7d9b4e3a2c6d4e8f12346",
+    "calificacion": 4,
+    "comentario": "Muy bueno, pero el postre podría mejorar.",
+    "fecha": "2025-05-06T15:00:00"
+  }
+]
+###
+PUT http://localhost:5000/reseñas/actualizar_re HTTP/1.1
+Content-Type: application/json
+
+[
+  {
+    "id": "6819ab9c821ba21d12c14dcf",
+    "IdUsuario": "60e5f8a2d1e4c53a2b7b1c45",
+    "IdRestaurante": "60d5c6f768e3b5f7a2d08c09",
+    "IdPedido": "60f7d9b4e3a2c6d4e8f12345",
+    "calificacion": 5,
+    "comentario": "¡Mala atención!",
+    "fecha": "2024-05-06T14:30:00"
+  },
+  {
+    "id": "6819ab9c821ba21d12c14dd0",
+    "IdUsuario": "60e5f8a2d1e4c53a2b7b1c46",
+    "IdRestaurante": "60d5c6f768e3b5f7a2d08c09",
+    "IdPedido": "60f7d9b4e3a2c6d4e8f12346",
+    "calificacion": 3,
+    "comentario": "Muy bueno, pero el postre podría mejorar.",
+    "fecha": "2025-05-06T15:00:00"
+  }
+]
+
+###
+DELETE http://localhost:5000/reseñas/eliminar_re HTTP/1.1
+Content-Type: application/json
+
+{
+    "id": "6819ab9c821ba21d12c14dcf"
+}
+###
+GET http://localhost:5000/reseñas/filtro_re?fecha=2025-04-18T02:00 HTTP/1.1
+Content-Type: application/json
+
+
+
+###
+GET http://localhost:5000/reseñas/proyeccion_re HTTP/1.1
+Content-Type: application/json
+
+{
+  "IdUsuario":0,
+  "IdRestaurante": 0,
+  "IdPedido": 1,
+  "calificacion": 1,
+  "fecha": 1,
+  "comentario": 1
+}
+
+###
+GET http://localhost:5000/reseñas/ordenamiento_re HTTP/1.1
+Content-Type: application/json
+
+{
+  "campo": "comentario",
+  "orden": -1
+}
+###
+GET http://localhost:5000/reseñas/limit_re?limit=3 HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/reseñas/skip_re?skip=3 HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/reseñas/count_re?IdUsuario=6812d2332c2f8fd876ac31d2 HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/reseñas/distinct_re?campo=comentario HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/reseñas/match_re?fecha=2025-04-01T00:00:00 HTTP/1.1
+Content-Type: application/json
+
+###
+GET http://localhost:5000/reseñas/group_re?campo=calificacion HTTP/1.1
+Content-Type: application/json
+

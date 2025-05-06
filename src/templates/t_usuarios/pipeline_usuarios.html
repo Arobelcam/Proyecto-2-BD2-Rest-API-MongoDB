@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Aggregation Pipeline Usuarios – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Aggregation Pipeline de Usuarios</h2>
+
+  <form id="pipeline-form" class="form-grid">
+    <label for="preferencias">Preferencias (coma-separadas)</label>
+    <input type="text" id="preferencias" name="preferencias" placeholder="comida,deportes" required>
+
+    <label for="sort_order">Tipo de ordenamiento</label>
+    <input type="number" id="sort_order" name="sort_order" placeholder="1 o -1" required>
+    <small>1 = ascendente, -1 = descendente</small>
+
+    <label for="limit">Limit (número entero mayor a 0)</label>
+    <input type="number" id="limit" name="limit" min="1" placeholder="5" required>
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('pipeline-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // Obtener y validar preferencias
+      const prefRaw = this.preferencias.value.trim();
+      if (!prefRaw) {
+        errorDiv.textContent = "El campo 'preferencias' es requerido.";
+        return;
+      }
+      const preferencias = prefRaw.split(',').map(s => s.trim()).filter(Boolean);
+      if (preferencias.length === 0) {
+        errorDiv.textContent = "Debes ingresar al menos una preferencia válida.";
+        return;
+      }
+
+      // Obtener y validar sort_order
+      const sortOrder = parseInt(this.sort_order.value, 10);
+      if (![1, -1].includes(sortOrder)) {
+        errorDiv.textContent = "El campo 'sort_order' solo acepta 1 o -1.";
+        return;
+      }
+
+      // Obtener y validar limit
+      const limit = parseInt(this.limit.value, 10);
+      if (!Number.isInteger(limit) || limit < 1) {
+        errorDiv.textContent = "El campo 'limit' debe ser un número entero mayor a 0.";
+        return;
+      }
+
+      // Enviar al servidor
+      const payload = { preferencias, sort_order: sortOrder, limit };
+      try {
+        const resp = await fetch('{{ url_for('pipeline_usuarios') }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          errorDiv.textContent = data.error || 'Error en la consulta.';
+        } else if (data.resultado) {
+          resultPre.textContent = JSON.stringify(data.resultado, null, 2);
+        } else {
+          errorDiv.textContent = data.error || 'Sin resultados.';
+        }
+      } catch (err) {
+        errorDiv.textContent = 'Error al conectar con el servidor.';
+      }
+    });
+  </script>
+{% endblock %}

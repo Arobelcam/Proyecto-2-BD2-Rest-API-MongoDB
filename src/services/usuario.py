@@ -597,9 +597,6 @@ def unwind_usuario_servicio():
     except Exception as e:
         return {"error": f"Error al realizar el unwind: {str(e)}"}, 500
     
-#Funcion de servicio para hacer lookup
-from bson import ObjectId  # Importar ObjectId desde bson
-
 def lookup_usuario_servicio():
     # Obtener los parámetros de la solicitud
     data = request.get_json()  # Obtener datos del cuerpo de la solicitud

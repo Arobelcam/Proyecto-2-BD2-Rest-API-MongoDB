@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Consultas por agregación arrays push{% endblock %}
+
+{% block content %}
+  <div class="container">
+    <h2 class="section-title">Consultas por agregación arrays push</h2>
+    <form id="push-form" class="form-grid">
+      <label for="usuario_id">ID usuario</label>
+      <input type="text" id="usuario_id" name="usuario_id" placeholder="ObjectId del usuario" required>
+
+      <label for="campo">Campo</label>
+      <input type="text" id="campo" name="campo" placeholder="preferencias" required>
+
+      <label for="valor">Valor a push</label>
+      <input type="text" id="valor" name="valor" placeholder="gluten free" required>
+      <small class="form-text text-muted">Para varios valores, sepáralos con comas.</small>
+
+      <button type="submit" class="menu-grid__btn">Generar consulta</button>
+    </form>
+
+    <div id="error" class="message error"></div>
+    <pre id="resultado" class="message"></pre>
+  </div>
+
+  <script>
+    document.getElementById('push-form').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // Recoger valores y validar
+      const usuarioId = ev.target.usuario_id.value.trim();
+      const campo = ev.target.campo.value.trim();
+      const valor = ev.target.valor.value.trim();
+
+      // Validaciones de entrada
+      if (!usuarioId) {
+        errorDiv.textContent = '❌ Por favor ingresa un ID de usuario válido.';
+        return;
+      }
+
+      if (campo !== 'preferencias') {
+        errorDiv.textContent = '❌ El campo debe ser "preferencias".';
+        return;
+      }
+
+      if (!valor) {
+        errorDiv.textContent = '❌ Debes ingresar al menos un valor para agregar.';
+        return;
+      }
+
+      // Si hay valores separados por comas, los convertimos en un array
+      const valores = valor.split(',').map(val => val.trim()).filter(val => val !== '');
+
+      const payload = {
+        usuario_id: usuarioId,
+        campo: campo,
+        valor: valores
+      };
+
+      // Realizar la solicitud
+      try {
+        const resp = await fetch('{{ url_for("push_usuario") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        
+        if (!resp.ok) throw new Error('Error en la petición');
+        const data = await resp.json();
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        errorDiv.textContent = '❌ Error al generar la consulta.';
+      }
+    });
+  </script>
+{% endblock %}
