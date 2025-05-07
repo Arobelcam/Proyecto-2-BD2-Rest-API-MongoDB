@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Proyección de Restaurantes – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consulta de proyección de documentos de restaurantes</h2>
+  <form id="proj-form" class="form-grid">
+    <label for="nombre">Nombre</label>
+    <input type="number" id="nombre" name="nombre" placeholder="1=incluye, 0=excluye" required>
+
+    <label for="descripcion">Descripción</label>
+    <input type="number" id="descripcion" name="descripcion" placeholder="1 o 0" required>
+
+    <label for="calificacion">Calificación</label>
+    <input type="number" id="calificacion" name="calificacion" placeholder="1 o 0" required>
+
+    <label for="tipo_cocina">Tipo Cocina</label>
+    <input type="number" id="tipo_cocina" name="tipo_cocina" placeholder="1 o 0" required>
+
+    <label for="categoria">Categoría</label>
+    <input type="number" id="categoria" name="categoria" placeholder="1 o 0" required>
+
+    <label for="direccion">Dirección</label>
+    <input type="number" id="direccion" name="direccion" placeholder="1 o 0" required>
+
+    <label for="ubicacion">Ubicación</label>
+    <input type="number" id="ubicacion" name="ubicacion" placeholder="1 o 0" required>
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('proj-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // Campos del esquema de restaurantes
+      const fields = [
+        'nombre', 'descripcion', 'calificacion',
+        'tipo_cocina', 'categoria', 'direccion', 'ubicacion'
+      ];
+      const payload = {};
+
+      // Recoger y validar valores
+      for (let f of fields) {
+        const val = ev.target[f].value.trim();
+        if (val !== '0' && val !== '1') {
+          errorDiv.textContent = '❌ Los únicos valores válidos son 1 y 0.';
+          return;
+        }
+        payload[f] = parseInt(val, 10);
+      }
+
+      // Validar índice existente: no proyectar solo dirección
+      const includes = fields.filter(f => payload[f] === 1);
+      if (includes.length === 1 && includes[0] === 'direccion') {
+        errorDiv.textContent = '❌ Consulta rechazada porque el campo seleccionado no contiene índices existentes.';
+        return;
+      }
+
+      try {
+        const resp = await fetch(window.location.pathname, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          errorDiv.textContent = `❌ ${data.error || 'Error en la petición.'}`;
+          return;
+        }
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = '❌ No se pudo conectar con el servidor.';
+      }
+    });
+  </script>
+{% endblock %}

@@ -52,3 +52,7 @@ def get_reseñas_match():
 def get_reseñas_group():
     return get_reseñas_group_servicio()
 
+# Agreggation pipeline
+@reseñas.route('/pipeline_re', methods=['GET'])
+def get_reseñas_pipeline():
+    return aggregation_pipeline_reseñas_servicio()

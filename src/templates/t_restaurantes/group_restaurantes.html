@@ -1,14 +1,31 @@
 {% extends 'base.html' %}
-{% block title %}Group de Usuarios – API Restaurante{% endblock %}
+
+{% block title %}Group de Restaurantes – API Restaurante{% endblock %}
+
 {% block content %}
-  <h2 class="section-title">Consultas por agregación - $group</h2>
+  <h2 class="section-title">Consultas por agregación - $group de restaurantes</h2>
+
   <form id="group-form" class="form-grid">
-    <label for="campo">Campo a agrupar (preferencias)</label>
-    <input type="text" id="campo" name="campo" placeholder="solo 'preferencias'" required>
+    <!-- Campo a agrupar -->
+    <label for="campo">Campo a agrupar</label>
+    <input
+      type="text"
+      id="campo"
+      name="campo"
+      placeholder="categoria o tipo_cocina"
+      required
+    >
 
+    <!-- Valor de filtro (opcional) -->
     <label for="valor">Valor de filtro (opcional)</label>
-    <input type="text" id="valor" name="valor" placeholder="Valor para match" >
+    <input
+      type="text"
+      id="valor"
+      name="valor"
+      placeholder="Valor para filtrar antes del group"
+    >
 
+    <!-- Botón de envío -->
     <button type="submit" class="menu-grid__btn">Generar consulta</button>
   </form>
 
@@ -25,14 +42,15 @@
       errorDiv.textContent = '';
       resultPre.textContent = '';
 
-      // Solo 'preferencias' es válido para group
-      if (campo !== 'preferencias') {
-        errorDiv.textContent = `El campo "${campo}" no es válido para agrupación.`;
+      // Campos válidos para agrupación
+      const validos = ['categoria', 'tipo_cocina'];
+      if (!validos.includes(campo)) {
+        errorDiv.textContent = `❌ El campo '${campo}' no es válido para agrupación. Sólo: ${validos.join(', ')}.`;
         return;
       }
 
-      // Construir query string
-      let url = `{{ url_for('group_usuario') }}`;
+      // Construir URL con query string
+      let url = window.location.pathname;
       if (valor) {
         const params = new URLSearchParams();
         params.append(campo, valor);
@@ -41,14 +59,14 @@
 
       try {
         const resp = await fetch(url, { method: 'GET' });
-        if (!resp.ok) {
-          const err = await resp.json();
-          throw new Error(err.error || 'Error en la petición');
-        }
         const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Error en la petición');
+        }
         resultPre.textContent = JSON.stringify(data, null, 2);
       } catch (err) {
-        errorDiv.textContent = err.message;
+        console.error(err);
+        errorDiv.textContent = `❌ ${err.message}`;
       }
     });
   </script>

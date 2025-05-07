@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Consultas por agregación arrays pull{% endblock %}
+{% block content %}
+  <h2 class="section-title">Consultas por agregación arrays pull</h2>
+
+  <form id="pull-form" class="form-grid">
+    <label for="usuario_id">ID usuario</label>
+    <input
+      type="text"
+      id="usuario_id"
+      name="usuario_id"
+      placeholder="ObjectId del usuario"
+      required
+    >
+
+    <label for="campo">Campo</label>
+    <input
+      type="text"
+      id="campo"
+      name="campo"
+      placeholder="preferencias"
+      required
+    >
+
+    <label for="valor">Valor a pull</label>
+    <input
+      type="text"
+      id="valor"
+      name="valor"
+      placeholder="gluten free"
+      required
+    >
+    <small class="form-note">Para varios, sepáralos con comas.</small>
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('pull-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      const usuario_id = ev.target.usuario_id.value.trim();
+      const campo      = ev.target.campo.value.trim();
+      const valorRaw   = ev.target.valor.value.trim();
+
+      // Validaciones
+      if (!usuario_id) {
+        errorDiv.textContent = '❌ Por favor ingresa un ID de usuario válido.';
+        return;
+      }
+      if (campo !== 'preferencias') {
+        errorDiv.textContent = `❌ Campo no válido (“${campo}”). Sólo “preferencias” está permitido.`;
+        return;
+      }
+      if (!valorRaw) {
+        errorDiv.textContent = '❌ Debes ingresar al menos un valor para pull.';
+        return;
+      }
+
+      // Separar múltiples valores
+      const valores = valorRaw.split(',').map(v => v.trim()).filter(v => v);
+      const url = '{{ url_for("pull_usuario") }}';
+
+      try {
+        let respuesta;
+        if (valores.length === 1) {
+          // Un solo valor
+          respuesta = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuario_id, campo, valor: valores[0] })
+          });
+          respuesta = await respuesta.json();
+        } else {
+          // Varios valores: ejecutar uno a uno
+          const results = [];
+          for (let v of valores) {
+            const resp = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ usuario_id, campo, valor: v })
+            });
+            results.push(await resp.json());
+          }
+          respuesta = results;
+        }
+        resultPre.textContent = JSON.stringify(respuesta, null, 2);
+      } catch (err) {
+        errorDiv.textContent = '❌ Error al generar la consulta.';
+      }
+    });
+  </script>
+{% endblock %}

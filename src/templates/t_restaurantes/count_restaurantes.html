@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Count de Restaurantes – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consultas por agregación - count de restaurantes</h2>
+  <form id="count-form" class="form-grid">
+    <!-- Selección de campo -->
+    <label for="campo">Campo para count</label>
+    <input
+      type="text"
+      id="campo"
+      name="campo"
+      placeholder="calificacion, tipo_cocina, nombre o categoria"
+      required
+    >
+
+    <!-- Valor(es) de filtro -->
+    <label for="valor">Valor</label>
+    <input
+      type="text"
+      id="valor"
+      name="valor"
+      placeholder="Valor para el filtro"
+      required
+    >
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('count-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const campo = ev.target.campo.value.trim();
+      const valorRaw = ev.target.valor.value.trim();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // Campos válidos
+      const validos = ['calificacion', 'tipo_cocina', 'nombre', 'categoria'];
+      if (!validos.includes(campo)) {
+        errorDiv.textContent = `❌ Campo '${campo}' no válido. Sólo: ${validos.join(', ')}.`;
+        return;
+      }
+
+      // Construir params
+      const params = new URLSearchParams();
+      if (campo === 'tipo_cocina') {
+        // múltiple valores
+        const arr = valorRaw.split(',').map(s => s.trim()).filter(Boolean);
+        if (!arr.length) {
+          errorDiv.textContent = '❌ Debes ingresar al menos un tipo de cocina.';
+          return;
+        }
+        arr.forEach(v => params.append('tipo_cocina', v));
+      } else if (campo === 'calificacion') {
+        const num = parseFloat(valorRaw);
+        if (isNaN(num)) {
+          errorDiv.textContent = '❌ La calificación debe ser un número válido.';
+          return;
+        }
+        params.append('calificacion', num);
+      } else {
+        // nombre o categoria
+        params.append(campo, valorRaw);
+      }
+
+      const url = `${window.location.pathname}?${params.toString()}`;
+
+      try {
+        const resp = await fetch(url, { method: 'GET' });
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Error en la consulta.');
+        }
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = `❌ ${err.message}`;
+      }
+    });
+  </script>
+{% endblock %}

@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 {% block title %}Menu – API Restaurante{% endblock %}
 {% block content %}
-  <h2 class="section-title">Página de Menu</h2>
+  <h2 class="section-title">Página de articulos menu</h2>
   <div class="menu-grid">
-    <a href="#" class="menu-grid__btn">Crear  Aritculos Menu</a>
-    <a href="#" class="menu-grid__btn">Consultas Articulos Menu</a>
-    <a href="#" class="menu-grid__btn">Actualizar Articulos Menu</a>
-    <a href="#" class="menu-grid__btn">Borrar Articulos Menu</a>
+    <a href="{{ url_for('crear_menu') }}" class="menu-grid__btn">Crear menu</a>
+    <a href="{{ url_for('consultas_menu') }}" class="menu-grid__btn">Consultas menu</a>
+    <a href="{{ url_for('actualizar_menu') }}" class="menu-grid__btn">Actualizar menu</a>
+    <a href="{{ url_for('eliminar_menu') }}" class="menu-grid__btn">Borrar menu</a>
   </div>
 {% endblock %}

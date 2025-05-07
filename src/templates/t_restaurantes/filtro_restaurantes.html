@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Filtro de Restaurantes – API Restaurante{% endblock %}
+{% block content %}
+  <h2 class="section-title">Consulta de filtrado de restaurantes</h2>
+
+  <form id="filter-form" class="form-grid">
+    <!-- Selección de campo -->
+    <label for="campo">Campo a filtrar</label>
+    <input
+      type="text"
+      id="campo"
+      name="campo"
+      placeholder="nombre, tipo_cocina, categoria o calificacion"
+      required
+    >
+
+    <!-- Valor a buscar -->
+    <label for="valor">Valor</label>
+    <input
+      type="text"
+      id="valor"
+      name="valor"
+      placeholder="Valor a buscar"
+      required
+    >
+
+    <!-- Botón de envío -->
+    <button type="submit" class="menu-grid__btn">Realizar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('filter-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+
+      const campo = ev.target.campo.value.trim();
+      const valorRaw = ev.target.valor.value.trim();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // Campos válidos
+      const validos = ['nombre', 'tipo_cocina', 'categoria', 'calificacion'];
+      if (!validos.includes(campo)) {
+        errorDiv.textContent = `❌ Campo '${campo}' no válido. Sólo: ${validos.join(', ')}.`;
+        return;
+      }
+
+      // Preparar payload
+      let payload = {};
+      if (campo === 'tipo_cocina') {
+        const arr = valorRaw.split(',').map(s => s.trim()).filter(Boolean);
+        if (!arr.length) {
+          errorDiv.textContent = '❌ Debes indicar al menos un tipo de cocina.';
+          return;
+        }
+        payload[campo] = arr;
+      } else if (campo === 'calificacion') {
+        const num = parseFloat(valorRaw);
+        if (isNaN(num)) {
+          errorDiv.textContent = '❌ La calificación debe ser un número.';
+          return;
+        }
+        payload[campo] = num;
+      } else {
+        payload[campo] = valorRaw;
+      }
+
+      try {
+        const resp = await fetch(window.location.pathname, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await resp.json();
+        if (!resp.ok) {
+          errorDiv.textContent = `❌ ${data.error || 'Error en la consulta.'}`;
+          return;
+        }
+
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = '❌ No se pudo conectar con el servidor.';
+      }
+    });
+  </script>
+{% endblock %}

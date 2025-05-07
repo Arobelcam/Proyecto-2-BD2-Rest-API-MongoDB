@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}Lookup en Restaurantes – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consultas por agregación embedded lookup en restaurantes</h2>
+
+  <form id="lookup-form" class="form-grid">
+    <!-- ID del restaurante -->
+    <label for="restaurante_id">ID restaurante</label>
+    <input
+      type="text"
+      id="restaurante_id"
+      name="restaurante_id"
+      placeholder="ObjectId del restaurante (24 hex dígitos)"
+      required
+    >
+
+    <!-- Colección con la que hacer lookup -->
+    <label for="coleccion_lookup">Colección Lookup</label>
+    <input
+      type="text"
+      id="coleccion_lookup"
+      name="coleccion_lookup"
+      placeholder="menu, pedidos o reseñas"
+      required
+    >
+
+    <!-- Campo local fijo -->
+    <label for="campo_local">Campo Local</label>
+    <input
+      type="text"
+      id="campo_local"
+      name="campo_local"
+      value="_id"
+      disabled
+    >
+
+    <!-- Campo foreign fijo -->
+    <label for="campo_foreign">Campo Foreign</label>
+    <input
+      type="text"
+      id="campo_foreign"
+      name="campo_foreign"
+      value="IdRestaurante"
+      disabled
+    >
+
+    <button type="submit" class="menu-grid__btn">Hacer agregación</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('lookup-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // 1) Validar ID de restaurante
+      const rawId = ev.target.restaurante_id.value.trim();
+      const oidPattern = /^[0-9a-fA-F]{24}$/;
+      if (!oidPattern.test(rawId)) {
+        errorDiv.textContent = '❌ El ID de restaurante debe tener 24 caracteres hexadecimales.';
+        return;
+      }
+
+      // 2) Validar colección
+      const coleccion = ev.target.coleccion_lookup.value.trim();
+      const validCols = ['menu', 'pedidos', 'reseñas'];
+      if (!validCols.includes(coleccion)) {
+        errorDiv.textContent = `❌ Colección '${coleccion}' no válida. Sólo: ${validCols.join(', ')}.`;
+        return;
+      }
+
+      // 3) Campos locales y foreign (valores fijos)
+      const campo_local = ev.target.campo_local.value;
+      const campo_foreign = ev.target.campo_foreign.value;
+
+      // 4) Enviar POST al endpoint actual
+      try {
+        const resp = await fetch(window.location.pathname, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            restaurante_id: rawId,
+            coleccion_lookup: coleccion,
+            campo_local,
+            campo_foreign
+          })
+        });
+
+        const payload = await resp.json();
+        if (!resp.ok) {
+          errorDiv.textContent = `❌ ${payload.error || 'Error en la consulta.'}`;
+        } else {
+          resultPre.textContent = JSON.stringify(payload, null, 2);
+        }
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = '❌ No se pudo conectar con el servidor.';
+      }
+    });
+  </script>
+{% endblock %}

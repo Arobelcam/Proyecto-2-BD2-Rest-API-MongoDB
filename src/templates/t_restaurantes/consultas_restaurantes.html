@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Consultas Restaurantes – API Restaurante{% endblock %}
+{% block content %}
+  <h2 class="section-title">Consulta de restaurantes</h2>
+  <div class="menu-grid">
+    <a href="{{ url_for('consultas_documentos_restaurantes') }}" class="menu-grid__btn">Consultas a documentos restaurantes</a>
+    <a href="{{ url_for('consultas_agregacion_restaurantes') }}" class="menu-grid__btn">Consultas con agregacion restaurantes</a>
+  </div>
+{% endblock %}

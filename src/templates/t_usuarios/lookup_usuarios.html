@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}Consultas por agregación embedded lookup{% endblock %}
+{% block content %}
+  <h2 class="section-title">Consultas por agregación embedded lookup</h2>
+
+  <form id="lookup-form" class="form-grid">
+    <label for="usuario_id">ID usuario</label>
+    <input
+      type="text"
+      id="usuario_id"
+      name="usuario_id"
+      placeholder="ObjectId del usuario (24 hex dígitos)"
+      required
+    >
+
+    <label for="coleccion_lookup">Colección Lookup</label>
+    <input
+      type="text"
+      id="coleccion_lookup"
+      name="coleccion_lookup"
+      placeholder="pedidos o reseñas"
+      required
+    >
+
+    <label for="campo_local">Campo Local</label>
+    <input
+      type="text"
+      id="campo_local"
+      name="campo_local"
+      value="_id"
+      disabled
+    >
+
+    <label for="campo_foreign">Campo Foreign</label>
+    <input
+      type="text"
+      id="campo_foreign"
+      name="campo_foreign"
+      value="IdUsuario"
+      disabled
+    >
+
+    <button type="submit" class="menu-grid__btn">Hacer agregación</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('lookup-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // 1) Validar ID de usuario
+      const rawId = ev.target.usuario_id.value.trim();
+      const oidPattern = /^[0-9a-fA-F]{24}$/;
+      if (!oidPattern.test(rawId)) {
+        errorDiv.textContent = '❌ El ID de usuario debe tener 24 caracteres hexadecimales.';
+        return;
+      }
+
+      // 2) Validar colección
+      const coleccion = ev.target.coleccion_lookup.value.trim();
+      const validCols = ['pedidos', 'reseñas'];
+      if (!validCols.includes(coleccion)) {
+        errorDiv.textContent = `❌ Colección '${coleccion}' no válida. Sólo: ${validCols.join(', ')}.`;
+        return;
+      }
+
+      // 3) Valores fijos de campo_local y campo_foreign
+      const campo_local = ev.target.campo_local.value;
+      const campo_foreign = ev.target.campo_foreign.value;
+
+      // 4) Enviar POST al mismo endpoint
+      try {
+        const resp = await fetch(window.location.pathname, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            usuario_id: rawId,
+            coleccion_lookup: coleccion,
+            campo_local,
+            campo_foreign
+          })
+        });
+
+        const payload = await resp.json();
+        if (!resp.ok) {
+          errorDiv.textContent = `❌ ${payload.error || 'Error en la consulta.'}`;
+        } else {
+          resultPre.textContent = JSON.stringify(payload, null, 2);
+        }
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = '❌ No se pudo conectar con el servidor.';
+      }
+    });
+  </script>
+{% endblock %}

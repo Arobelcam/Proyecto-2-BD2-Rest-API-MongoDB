@@ -1,14 +1,32 @@
 {% extends 'base.html' %}
-{% block title %}Ordenamiento de Usuarios – API Restaurante{% endblock %}
+
+{% block title %}Ordenamiento de Restaurantes – API Restaurante{% endblock %}
+
 {% block content %}
-  <h2 class="section-title">Consulta de ordenamiento de documentos de usuarios</h2>
+  <h2 class="section-title">Consulta de ordenamiento de documentos de restaurantes</h2>
+
   <form id="sort-form" class="form-grid">
+    <!-- Campo a ordenar -->
     <label for="campo">Campo a ordenar</label>
-    <input type="text" id="campo" name="campo" placeholder="nombre, email o telefono" required>
+    <input
+      type="text"
+      id="campo"
+      name="campo"
+      placeholder="nombre, calificacion o tipo_cocina"
+      required
+    >
 
+    <!-- Dirección de orden -->
     <label for="orden">Orden (1=ascendente, -1=descendente)</label>
-    <input type="number" id="orden" name="orden" placeholder="1 o -1" required>
+    <input
+      type="number"
+      id="orden"
+      name="orden"
+      placeholder="1 o -1"
+      required
+    >
 
+    <!-- Botón -->
     <button type="submit" class="menu-grid__btn">Generar consulta</button>
   </form>
 
@@ -25,35 +43,36 @@
       errorDiv.textContent = '';
       resultPre.textContent = '';
 
-      // Validar campo
-      const validos = ['nombre','email','telefono'];
+      // Campos válidos para restaurantes
+      const validos = ['nombre', 'calificacion', 'tipo_cocina'];
       if (!validos.includes(campo)) {
-        errorDiv.textContent = `El campo '${campo}' no es válido para ordenamiento.`;
+        errorDiv.textContent = `❌ El campo '${campo}' no es válido para ordenamiento.`;
         return;
       }
 
       // Validar orden
       if (ordenVal !== '1' && ordenVal !== '-1') {
-        errorDiv.textContent = 'El único valor válido para orden es 1 o -1.';
+        errorDiv.textContent = '❌ El único valor válido para orden es 1 o -1.';
         return;
       }
 
       const payload = { campo, orden: parseInt(ordenVal, 10) };
 
       try {
-        const resp = await fetch('{{ url_for('ordenamiento_usuario') }}', {
+        const resp = await fetch(window.location.pathname, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
-        if (!resp.ok) {
-          const err = await resp.json();
-          throw new Error(err.error || 'Error en la petición');
-        }
+
         const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Error en la petición');
+        }
+
         resultPre.textContent = JSON.stringify(data, null, 2);
       } catch (err) {
-        errorDiv.textContent = err.message;
+        errorDiv.textContent = `❌ ${err.message}`;
       }
     });
   </script>

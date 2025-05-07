@@ -1,17 +1,40 @@
 {% extends 'base.html' %}
-{% block title %}Push de Preferencias – API Restaurante{% endblock %}
+
+{% block title %}Push en Restaurantes – API Restaurante{% endblock %}
+
 {% block content %}
-  <h2 class="section-title">Consultas por agregación arrays – $push</h2>
+  <h2 class="section-title">Consultas por agregación arrays – $push en restaurantes</h2>
 
   <form id="push-form" class="form-grid">
-    <label for="usuario_id">ID usuario</label>
-    <input type="text" id="usuario_id" name="usuario_id" placeholder="ObjectId del usuario" required>
+    <!-- ID del restaurante -->
+    <label for="restaurante_id">ID restaurante</label>
+    <input
+      type="text"
+      id="restaurante_id"
+      name="restaurante_id"
+      placeholder="ObjectId del restaurante"
+      required
+    >
 
+    <!-- Campo a modificar -->
     <label for="campo">Campo</label>
-    <input type="text" id="campo" name="campo" placeholder="preferencias" required>
+    <input
+      type="text"
+      id="campo"
+      name="campo"
+      placeholder="tipo_cocina"
+      required
+    >
 
+    <!-- Valor(es) a agregar -->
     <label for="valor">Valor(es) a push</label>
-    <input type="text" id="valor" name="valor" placeholder="valor1,valor2,..." required>
+    <input
+      type="text"
+      id="valor"
+      name="valor"
+      placeholder="valor1,valor2,..."
+      required
+    >
 
     <button type="submit" class="menu-grid__btn">Generar consulta</button>
   </form>
@@ -29,17 +52,17 @@
       errorDiv.textContent = '';
       resultPre.textContent = '';
 
-      const usuario_id = ev.target.usuario_id.value.trim();
-      const campo      = ev.target.campo.value.trim();
-      const rawValor   = ev.target.valor.value.trim();
+      const restaurante_id = ev.target.restaurante_id.value.trim();
+      const campo = ev.target.campo.value.trim();
+      const rawValor = ev.target.valor.value.trim();
 
-      // Validaciones
-      if (!usuario_id) {
-        errorDiv.textContent = '❌ Por favor ingresa un ID de usuario.';
+      // Validaciones básicas
+      if (!restaurante_id) {
+        errorDiv.textContent = '❌ Por favor ingresa un ID de restaurante.';
         return;
       }
-      if (campo !== 'preferencias') {
-        errorDiv.textContent = `❌ Campo no válido (“${campo}”). Solo “preferencias” está permitido.`;
+      if (campo !== 'tipo_cocina') {
+        errorDiv.textContent = `❌ Campo no válido (“${campo}”). Solo “tipo_cocina” está permitido.`;
         return;
       }
       if (!rawValor) {
@@ -47,24 +70,19 @@
         return;
       }
 
-      // Separar por comas y limpiar
-      const valores = rawValor.split(',')
-        .map(s => s.trim())
-        .filter(s => s.length > 0);
-
+      // Separar valores por comas
+      const valores = rawValor.split(',').map(s => s.trim()).filter(s => s);
       if (valores.length === 0) {
         errorDiv.textContent = '❌ Ingresa valores válidos separados por comas.';
         return;
       }
 
-      const url = '{{ url_for("push_usuario") }}';
+      // Hacer push para cada valor
       const responses = [];
-
-      // Hacer un push por cada valor
       for (let val of valores) {
-        const payload = { usuario_id, campo, valor: val };
+        const payload = { restaurante_id, campo, valor: val };
         try {
-          const resp = await fetch(url, {
+          const resp = await fetch(window.location.pathname, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)

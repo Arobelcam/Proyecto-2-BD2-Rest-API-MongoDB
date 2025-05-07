@@ -3,9 +3,9 @@
 {% block content %}
   <h2 class="section-title">Página de Restaurantes</h2>
   <div class="menu-grid">
-    <a href="#" class="menu-grid__btn">Crear  Restaurantes</a>
-    <a href="#" class="menu-grid__btn">Consultas Restaurantes</a>
-    <a href="#" class="menu-grid__btn">Actualizar Restaurantes</a>
-    <a href="#" class="menu-grid__btn">Borrar Restaurantes</a>
+    <a href="{{ url_for('crear_restaurante') }}" class="menu-grid__btn">Crear  Restaurantes</a>
+    <a href="{{ url_for('consultas_restaurantes') }}" class="menu-grid__btn">Consultas Restaurantes</a>
+    <a href="{{ url_for('actualizar_restaurante') }}" class="menu-grid__btn">Actualizar Restaurantes</a>
+    <a href="{{ url_for('eliminar_restaurante') }}" class="menu-grid__btn">Borrar Restaurantes</a>
   </div>
 {% endblock %}

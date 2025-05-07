@@ -466,4 +466,62 @@ def get_reseñas_group_servicio():
     except Exception as e:
         return {"error": f"Error en group: {str(e)}"}, 500
  
+ #Funcion de servicio agreggation pipeline de reseñas
+def aggregation_pipeline_reseñas_servicio():
+    data = request.get_json() or {}
+    try:
+        min_cal = int(data.get('min_calificacion', 1))
+    except:
+        return {"error": "'min_calificacion' debe ser un entero."}, 400
+
+    since_s = data.get('since_date')
+    since_dt = None
+    if since_s:
+        try:
+            since_dt = datetime.fromisoformat(since_s)
+        except:
+            return {"error": "'since_date' debe ser ISO8601 válido."}, 400
+
+    sort_order = data.get('sort_order', -1)
+    if sort_order not in (1, -1):
+        return {"error": "'sort_order' debe ser 1 o -1."}, 400
+
+    try:
+        limit = int(data.get('limit', 5))
+        if limit <= 0:
+            raise ValueError
+    except:
+        return {"error": "'limit' debe ser entero > 0."}, 400
+
+    # 2) Construir etapa $match
+    match_crit = {'calificacion': {'$gte': min_cal}}
+    if since_dt:
+        match_crit['fecha'] = {'$gte': since_dt}
+
+    # 3) Armar pipeline
+    pipeline = [
+      { '$match': match_crit },                                    # Stage 1
+      { '$project': {                                              # Stage 2
+          'yearMonth': {
+            '$dateToString': {'format': "%Y-%m", 'date': "$fecha"}
+          },
+          'calificacion': 1
+      }},
+      { '$group': {                                               # Stage 3
+          '_id': "$yearMonth",
+          'avgCalificacion': { '$avg': "$calificacion" },
+          'totalReseñas':    { '$sum': 1 }
+      }},
+      { '$sort': { 'avgCalificacion': sort_order } },             # Stage 4
+      { '$limit': limit }                                         # Stage 5
+    ]
+
+    # 4) Ejecutar
+    try:
+        resultados = list(mongo.db.reseñas.aggregate(pipeline))
+        if not resultados:
+            return {"error": "No se encontraron resultados con esos criterios."}, 404
+        return {"resultado": resultados}
+    except Exception as e:
+        return {"error": f"Error al ejecutar la pipeline: {str(e)}"}, 500
  

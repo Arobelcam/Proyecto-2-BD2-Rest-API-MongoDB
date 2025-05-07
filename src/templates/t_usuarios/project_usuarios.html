@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}Consultas por agregación embedded project{% endblock %}
+{% block content %}
+  <h2 class="section-title">Consultas por agregación embedded project</h2>
+
+  <form id="project-form" class="form-grid">
+    <label for="usuario_id">ID usuario</label>
+    <input
+      type="text"
+      id="usuario_id"
+      name="usuario_id"
+      placeholder="ObjectId del usuario (24 hex dígitos)"
+      required
+    >
+
+    <label for="campo_1">Campo 1</label>
+    <input
+      type="text"
+      id="campo_1"
+      name="campo_1"
+      placeholder="nombre, email, telefono, direccion, preferencias"
+    >
+
+    <label for="campo_2">Campo 2</label>
+    <input
+      type="text"
+      id="campo_2"
+      name="campo_2"
+      placeholder="(opcional)"
+    >
+
+    <label for="campo_3">Campo 3</label>
+    <input
+      type="text"
+      id="campo_3"
+      name="campo_3"
+      placeholder="(opcional)"
+    >
+
+    <label for="campo_4">Campo 4</label>
+    <input
+      type="text"
+      id="campo_4"
+      name="campo_4"
+      placeholder="(opcional)"
+    >
+
+    <label for="campo_5">Campo 5</label>
+    <input
+      type="text"
+      id="campo_5"
+      name="campo_5"
+      placeholder="(opcional)"
+    >
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('project-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // 1) Validar que el ID tenga 24 dígitos hexadecimales
+      const rawId = ev.target.usuario_id.value.trim();
+      const oidPattern = /^[0-9a-fA-F]{24}$/;
+      if (!oidPattern.test(rawId)) {
+        errorDiv.textContent = '❌ El ID de usuario debe tener 24 caracteres hexadecimales.';
+        return;
+      }
+
+      // 2) Recoger y validar campos
+      const validFields = ['nombre', 'email', 'telefono', 'direccion', 'preferencias'];
+      const campos = [];
+      for (let i = 1; i <= 5; i++) {
+        const campo = ev.target[`campo_${i}`].value.trim();
+        if (campo) {
+          if (!validFields.includes(campo)) {
+            errorDiv.textContent = `❌ El campo '${campo}' no es válido. Sólo: ${validFields.join(', ')}.`;
+            return;
+          }
+          campos.push(campo);
+        }
+      }
+      if (campos.length === 0) {
+        errorDiv.textContent = '❌ Debes indicar al menos un campo para proyectar.';
+        return;
+      }
+
+      // 3) Enviar POST al mismo endpoint
+      try {
+        const resp = await fetch(window.location.pathname, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ usuario_id: rawId, campos })
+        });
+
+        const payload = await resp.json();
+        if (!resp.ok) {
+          errorDiv.textContent = `❌ ${payload.error || 'Error en la consulta.'}`;
+        } else {
+          resultPre.textContent = JSON.stringify(payload, null, 2);
+        }
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = '❌ No se pudo conectar con el servidor.';
+      }
+    });
+  </script>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}Consultas a documentos Menu – API Restaurante{% endblock %}
+{% block content %}
+  <h2 class="section-title">Consulta a documentos usuarios</h2>
+  <div class="menu-grid">
+    <a href="{{ url_for('filtro_menu') }}" class="menu-grid__btn">Filtro</a>
+    <a href="{{ url_for('proyeccion_menu') }}" class="menu-grid__btn">Proyeccion</a>
+    <a href="{{ url_for('ordenamiento_menu') }}" class="menu-grid__btn">Ordenamiento</a>
+    <a href="{{ url_for('limit_menu') }}" class="menu-grid__btn">Limit</a>
+    <a href="{{ url_for('skip_menu') }}" class="menu-grid__btn">Skip</a>
+  </div>
+{% endblock %}

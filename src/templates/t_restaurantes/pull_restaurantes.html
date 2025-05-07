@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Pull en Restaurantes – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consultas por agregación arrays – $pull en restaurantes</h2>
+
+  <form id="pull-form" class="form-grid">
+    <!-- ID del restaurante -->
+    <label for="restaurante_id">ID restaurante</label>
+    <input
+      type="text"
+      id="restaurante_id"
+      name="restaurante_id"
+      placeholder="ObjectId del restaurante"
+      required
+    >
+
+    <!-- Campo a modificar -->
+    <label for="campo">Campo</label>
+    <input
+      type="text"
+      id="campo"
+      name="campo"
+      placeholder="tipo_cocina"
+      required
+    >
+
+    <!-- Valor(es) a eliminar -->
+    <label for="valor">Valor a pull</label>
+    <input
+      type="text"
+      id="valor"
+      name="valor"
+      placeholder="valor1,valor2,..."
+      required
+    >
+    <small class="form-note">Para varios, sepáralos con comas.</small>
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('pull-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      const restaurante_id = ev.target.restaurante_id.value.trim();
+      const campo = ev.target.campo.value.trim();
+      const rawValor = ev.target.valor.value.trim();
+
+      // Validaciones
+      if (!restaurante_id) {
+        errorDiv.textContent = '❌ Por favor ingresa un ID de restaurante válido.';
+        return;
+      }
+      if (campo !== 'tipo_cocina') {
+        errorDiv.textContent = `❌ Campo no válido (“${campo}”). Sólo “tipo_cocina” está permitido.`;
+        return;
+      }
+      if (!rawValor) {
+        errorDiv.textContent = '❌ Debes ingresar al menos un valor para pull.';
+        return;
+      }
+
+      // Separar múltiples valores
+      const valores = rawValor.split(',')
+        .map(v => v.trim())
+        .filter(v => v);
+
+      const url = window.location.pathname;
+      const responses = [];
+
+      try {
+        // Ejecutar pull una vez por cada valor
+        for (let val of valores) {
+          const payload = {
+            restaurante_id,
+            campo,
+            valor: val
+          };
+          const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await resp.json();
+          responses.push({
+            valor: val,
+            status: resp.ok ? '✔️' : '❌',
+            response: data
+          });
+        }
+        resultPre.textContent = JSON.stringify(responses, null, 2);
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = '❌ Error al generar la consulta.';
+      }
+    });
+  </script>
+{% endblock %}

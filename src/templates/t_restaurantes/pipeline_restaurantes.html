@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+
+{% block title %}Aggregation Pipeline Restaurantes – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Aggregation Pipeline de Restaurantes</h2>
+
+  <form id="pipeline-form" class="form-grid">
+    <!-- Tipo de cocina para filtrar -->
+    <label for="tipo_cocina">Tipo de cocina (coma-separadas)</label>
+    <input
+      type="text"
+      id="tipo_cocina"
+      name="tipo_cocina"
+      placeholder="mexicana,italiana"
+      required
+    >
+
+    <!-- Ordenamiento de calificación promedio -->
+    <label for="sort_order">Orden por calificación promedio</label>
+    <input
+      type="number"
+      id="sort_order"
+      name="sort_order"
+      placeholder="1 o -1"
+      required
+    >
+    <small>1 = ascendente, -1 = descendente</small>
+
+    <!-- Límite de resultados -->
+    <label for="limit">Límite (número entero mayor a 0)</label>
+    <input
+      type="number"
+      id="limit"
+      name="limit"
+      min="1"
+      placeholder="5"
+      required
+    >
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('pipeline-form').addEventListener('submit', async function(ev) {
+      ev.preventDefault();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // Obtener y validar tipo_cocina
+      const cocinaRaw = this.tipo_cocina.value.trim();
+      if (!cocinaRaw) {
+        errorDiv.textContent = "❌ El campo 'tipo_cocina' es requerido.";
+        return;
+      }
+      const tipo_cocina = cocinaRaw.split(',').map(s => s.trim()).filter(Boolean);
+      if (tipo_cocina.length === 0) {
+        errorDiv.textContent = "❌ Debes ingresar al menos un tipo de cocina válido.";
+        return;
+      }
+
+      // Validar sort_order
+      const sortOrder = parseInt(this.sort_order.value, 10);
+      if (![1, -1].includes(sortOrder)) {
+        errorDiv.textContent = "❌ El campo 'sort_order' solo acepta 1 o -1.";
+        return;
+      }
+
+      // Validar limit
+      const limit = parseInt(this.limit.value, 10);
+      if (!Number.isInteger(limit) || limit < 1) {
+        errorDiv.textContent = "❌ El campo 'limit' debe ser un número entero mayor a 0.";
+        return;
+      }
+
+      // Construir payload
+      const payload = { tipo_cocina, sort_order: sortOrder, limit };
+
+      try {
+        const resp = await fetch(window.location.pathname, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          errorDiv.textContent = `❌ ${data.error || 'Error en la consulta.'}`;
+        } else if (data.resultado) {
+          resultPre.textContent = JSON.stringify(data.resultado, null, 2);
+        } else {
+          errorDiv.textContent = data.error || '❌ Sin resultados.';
+        }
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = '❌ Error al conectar con el servidor.';
+      }
+    });
+  </script>
+{% endblock %}
