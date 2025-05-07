@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Group de Menú – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consultas por agregación - $group de menú</h2>
+  <form id="group-form" class="form-grid">
+    <!-- Filtro opcional por categoría -->
+    <label for="categoria">Filtrar por Categoría (opcional)</label>
+    <input
+      type="text"
+      id="categoria"
+      name="categoria"
+      placeholder="Ej: pasta, sushi"
+    >
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('group-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const filtro = ev.target.categoria.value.trim();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // Construir URL
+      let url = `{{ url_for('group_menu') }}`;
+      if (filtro) {
+        url += `?categoria=${encodeURIComponent(filtro)}`;
+      }
+
+      try {
+        const resp = await fetch(url, { method: 'GET' });
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Error en la petición');
+        }
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = `❌ ${err.message}`;
+      }
+    });
+  </script>
+{% endblock %}

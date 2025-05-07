@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Proyección de Menú – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consulta de proyección de documentos de menú</h2>
+  <form id="proj-form" class="form-grid">
+    <!-- Campo para proyectar el ID de restaurante -->
+    <label for="IDRestaurante">IDRestaurante</label>
+    <input
+      type="number"
+      id="IDRestaurante"
+      name="IDRestaurante"
+      placeholder="1=incluye,0=excluye"
+      required
+    >
+
+    <!-- Campos a proyectar -->
+    <label for="nombre_plato">Nombre del Plato</label>
+    <input type="number" id="nombre_plato" name="nombre_plato" placeholder="1 o 0" required>
+
+    <label for="precio">Precio</label>
+    <input type="number" id="precio" name="precio" placeholder="1 o 0" required>
+
+    <label for="categoria">Categoría</label>
+    <input type="number" id="categoria" name="categoria" placeholder="1 o 0" required>
+
+    <label for="descripcion">Descripción</label>
+    <input type="number" id="descripcion" name="descripcion" placeholder="1 o 0" required>
+
+    <label for="ingredientes">Ingredientes</label>
+    <input type="number" id="ingredientes" name="ingredientes" placeholder="1 o 0" required>
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('proj-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      const fields = ['IDRestaurante','nombre_plato','precio','categoria','descripcion','ingredientes'];
+      const payload = {};
+      for (let f of fields) {
+        const val = ev.target[f].value.trim();
+        if (val !== '0' && val !== '1') {
+          errorDiv.textContent = '❌ Sólo 1 (incluye) o 0 (excluye) son válidos.';
+          return;
+        }
+        payload[f] = parseInt(val, 10);
+      }
+
+      try {
+        const resp = await fetch('{{ url_for("proyeccion_menu") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Error en la consulta.');
+        }
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = `❌ ${err.message}`;
+      }
+    });
+  </script>
+{% endblock %}

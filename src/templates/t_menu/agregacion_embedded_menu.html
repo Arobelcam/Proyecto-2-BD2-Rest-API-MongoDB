@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Consultas por agregación maneejo de embeddeds menu – API Restaurante{% endblock %}
+{% block content %}
+  <h2 class="section-title">Consulta por agregación manejo de embeddes menu</h2>
+  <div class="menu-grid">
+    <a href="{{ url_for('project_menu') }}" class="menu-grid__btn">Project</a>
+    <a href="{{ url_for('unwind_menu') }}" class="menu-grid__btn">Unwind</a>
+    <a href="{{ url_for('lookup_menu') }}" class="menu-grid__btn">Lookup</a>
+  </div>
+{% endblock %}

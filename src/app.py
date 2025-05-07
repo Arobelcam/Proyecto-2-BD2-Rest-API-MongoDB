@@ -492,7 +492,7 @@ def filtro_menu():
 @app.route('/menu/consultas_m/consul-documentos_m/proyeccion_m', methods=['GET', 'POST'])
 def proyeccion_menu():
     if request.method == 'POST':
-        resultado = get_restaurantes_proyeccion_servicio()
+        resultado = get_menu_proyeccion_servicio()
         return jsonify(resultado)
     return render_template('t_menu/proyeccion_menu.html')
 

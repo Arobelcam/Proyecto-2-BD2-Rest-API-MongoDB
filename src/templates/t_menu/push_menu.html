@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Push de Ingredientes – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consultas por agregación arrays – $push en menú</h2>
+
+  <form id="push-form" class="form-grid">
+    <!-- ID del plato de menú -->
+    <label for="menu_id">ID Plato de Menú</label>
+    <input
+      type="text"
+      id="menu_id"
+      name="menu_id"
+      placeholder="ObjectId del plato de menú"
+      required
+    >
+
+    <!-- Campo fijo 'ingredientes' -->
+    <label for="campo">Campo</label>
+    <input
+      type="text"
+      id="campo"
+      name="campo"
+      value="ingredientes"
+      disabled
+    >
+
+    <!-- Valores a agregar -->
+    <label for="valor">Ingrediente(s) a push</label>
+    <input
+      type="text"
+      id="valor"
+      name="valor"
+      placeholder="ingrediente1,ingrediente2,..."
+      required
+    >
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    const form = document.getElementById('push-form');
+    const errorDiv = document.getElementById('error');
+    const resultPre = document.getElementById('resultado');
+
+    form.addEventListener('submit', async ev => {
+      ev.preventDefault();
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      const menu_id = ev.target.menu_id.value.trim();
+      const campo   = ev.target.campo.value.trim();
+      const rawValor = ev.target.valor.value.trim();
+
+      // Validaciones
+      if (!menu_id) {
+        errorDiv.textContent = '❌ Por favor ingresa un ID de plato de menú válido.';
+        return;
+      }
+      if (campo !== 'ingredientes') {
+        errorDiv.textContent = `❌ Campo no válido (“${campo}”). Sólo “ingredientes” está permitido.`;
+        return;
+      }
+      if (!rawValor) {
+        errorDiv.textContent = '❌ Debes ingresar al menos un ingrediente.';
+        return;
+      }
+
+      // Separar por comas y limpiar
+      const valores = rawValor.split(',')
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+
+      if (valores.length === 0) {
+        errorDiv.textContent = '❌ Ingresa valores válidos separados por comas.';
+        return;
+      }
+
+      const url = '{{ url_for("push_menu") }}';
+      const responses = [];
+
+      // Hacer un push por cada ingrediente
+      for (let val of valores) {
+        const payload = { menu_id, campo, valor: val };
+        try {
+          const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const data = await resp.json();
+          responses.push({
+            ingrediente: val,
+            status: resp.ok ? '✔️' : '❌',
+            response: data
+          });
+        } catch (err) {
+          responses.push({
+            ingrediente: val,
+            status: '❌',
+            response: { error: 'Error de conexión' }
+          });
+        }
+      }
+
+      resultPre.textContent = JSON.stringify(responses, null, 2);
+    });
+  </script>
+{% endblock %}

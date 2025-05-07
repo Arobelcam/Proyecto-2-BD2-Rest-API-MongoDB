@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Lookup de Menú – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consultas por agregación embedded lookup en menú</h2>
+
+  <form id="lookup-form" class="form-grid">
+    <!-- ID del plato de menú -->
+    <label for="menu_id">ID Plato de Menú</label>
+    <input
+      type="text"
+      id="menu_id"
+      name="menu_id"
+      placeholder="ObjectId del menú (24 hex dígitos)"
+      required
+    >
+
+    <!-- Colección destino para el lookup -->
+    <label for="coleccion_lookup">Colección Lookup</label>
+    <input
+      type="text"
+      id="coleccion_lookup"
+      name="coleccion_lookup"
+      value="restaurantes"
+      disabled
+    >
+
+    <!-- Campo local fijo -->
+    <label for="campo_local">Campo Local</label>
+    <input
+      type="text"
+      id="campo_local"
+      name="campo_local"
+      value="IdRestaurante"
+      disabled
+    >
+
+    <!-- Campo foreign fijo -->
+    <label for="campo_foreign">Campo Foreign</label>
+    <input
+      type="text"
+      id="campo_foreign"
+      name="campo_foreign"
+      value="_id"
+      disabled
+    >
+
+    <button type="submit" class="menu-grid__btn">Hacer agregación</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('lookup-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // 1) Validar ID de menú como 24 dígitos hexadecimales
+      const rawId = ev.target.menu_id.value.trim();
+      const oidPattern = /^[0-9a-fA-F]{24}$/;
+      if (!oidPattern.test(rawId)) {
+        errorDiv.textContent = '❌ El ID del menú debe tener 24 caracteres hexadecimales.';
+        return;
+      }
+
+      // 2) Construir payload con valores fijos
+      const payload = {
+        menu_id: rawId,
+        coleccion_lookup: 'restaurantes',
+        campo_local: 'IdRestaurante',
+        campo_foreign: '_id'
+      };
+
+      // 3) Enviar POST al endpoint de lookup_menu
+      try {
+        const resp = await fetch('{{ url_for("lookup_menu") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          errorDiv.textContent = `❌ ${data.error || 'Error en la consulta.'}`;
+        } else {
+          resultPre.textContent = JSON.stringify(data, null, 2);
+        }
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = '❌ No se pudo conectar con el servidor.';
+      }
+    });
+  </script>
+{% endblock %}

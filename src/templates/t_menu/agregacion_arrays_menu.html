@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Consultas por agregación manerjo de arrays Menu – API Restaurante{% endblock %}
+{% block content %}
+  <h2 class="section-title">Consulta por agregación manejo de arrays Menu</h2>
+  <div class="menu-grid">
+    <a href="{{ url_for('push_menu') }}" class="menu-grid__btn">Push</a>
+    <a href="{{ url_for('pull_menu') }}" class="menu-grid__btn">Pull</a>
+    <a href="{{ url_for('add_to_set_menu') }}" class="menu-grid__btn">AddToSet</a>
+  </div>
+{% endblock %}

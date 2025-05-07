@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Actualizar Menú – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Actualizar Platos de Menú</h2>
+  <div class="form-grid">
+    <!-- Paso 1: Indicar cantidad de platos a actualizar -->
+    <label for="menu-count">Cantidad de platos a actualizar</label>
+    <input type="number" id="menu-count" min="1" placeholder="Ingresa número de platos" required>
+  </div>
+
+  <!-- Contenedor dinámico para los formularios individuales -->
+  <div id="form-container"></div>
+
+  <!-- Botones de navegación -->
+  <div class="actions">
+    <button id="next-btn" class="menu-grid__btn" disabled>Siguiente</button>
+    <button id="update-btn" class="menu-grid__btn" style="display:none;">Actualizar Menú</button>
+  </div>
+
+  <!-- Mensaje de resultado -->
+  <div id="message" class="message"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const countInput = document.getElementById('menu-count');
+      const formContainer = document.getElementById('form-container');
+      const nextBtn = document.getElementById('next-btn');
+      const updateBtn = document.getElementById('update-btn');
+      const messageDiv = document.getElementById('message');
+
+      let totalCount = 0;
+      let currentIndex = 0;
+      const updateData = [];
+
+      countInput.addEventListener('input', () => {
+        totalCount = parseInt(countInput.value, 10) || 0;
+        updateData.length = 0;
+        currentIndex = 0;
+        messageDiv.textContent = '';
+        formContainer.innerHTML = '';
+        nextBtn.disabled = totalCount < 1;
+        nextBtn.style.display = totalCount > 0 ? 'inline-block' : 'none';
+        updateBtn.style.display = 'none';
+      });
+
+      nextBtn.addEventListener('click', () => {
+        const formEl = formContainer.querySelector('form');
+        if (!formEl) {
+          generateForm();
+          return;
+        }
+        const formData = new FormData(formEl);
+        const item = { id: formData.get('id').trim() };
+        // Incluir campos solo si tienen valor
+        ['nombre_plato','precio','categoria','descripcion','ingredientes'].forEach(field => {
+          const val = formData.get(field).trim();
+          if (val) {
+            if (field === 'precio') {
+              item[field] = parseFloat(val);
+            } else if (field === 'ingredientes') {
+              item[field] = val.split(',').map(s=>s.trim()).filter(Boolean);
+            } else {
+              item[field] = val;
+            }
+          }
+        });
+        updateData.push(item);
+        currentIndex++;
+
+        if (currentIndex < totalCount) {
+          generateForm();
+        } else {
+          formContainer.innerHTML = '';
+          nextBtn.style.display = 'none';
+          updateBtn.style.display = 'inline-block';
+        }
+      });
+
+      updateBtn.addEventListener('click', async () => {
+        try {
+          const resp = await fetch(window.location.pathname, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updateData)
+          });
+          const result = await resp.json();
+          messageDiv.textContent = result.mensaje || `Se actualizaron ${updateData.length} plato(s) correctamente.`;
+          updateBtn.disabled = true;
+        } catch (err) {
+          messageDiv.textContent = '❌ Error al actualizar menú.';
+        }
+      });
+
+      function generateForm() {
+        formContainer.innerHTML = `
+          <form class="form-grid">
+            <h3>Plato ${currentIndex + 1} de ${totalCount}</h3>
+            <input type="text" name="id" placeholder="ID del plato (ObjectId)" required>
+            <input type="text" name="nombre_plato" placeholder="Nombre del Plato (opcional)">
+            <input type="number" step="0.01" name="precio" placeholder="Precio (opcional)">
+            <input type="text" name="categoria" placeholder="Categoría (opcional)">
+            <input type="text" name="descripcion" placeholder="Descripción (opcional)">
+            <input type="text" name="ingredientes" placeholder="Ingredientes (coma-separados, opcional)">
+          </form>
+        `;
+      }
+    });
+  </script>
+{% endblock %}

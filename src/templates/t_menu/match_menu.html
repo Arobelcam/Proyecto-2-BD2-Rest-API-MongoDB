@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block title %}Match de Menú – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consultas por agregación - $match del menú</h2>
+  <form id="match-form" class="form-grid">
+    <!-- Campo para aplicar $match -->
+    <label for="campo">Campo a hacer match</label>
+    <input
+      type="text"
+      id="campo"
+      name="campo"
+      placeholder="nombre_plato, categoria, precio, descripcion o ingredientes"
+      required
+    >
+
+    <!-- Valor para el match -->
+    <label for="valor">Valor</label>
+    <input
+      type="text"
+      id="valor"
+      name="valor"
+      placeholder="Valor para el match"
+      required
+    >
+
+    <button type="submit" class="menu-grid__btn">Hacer agregación</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('match-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const campo = ev.target.campo.value.trim();
+      const valorRaw = ev.target.valor.value.trim();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // Campos válidos para match en menú
+      const validos = ['nombre_plato','categoria','precio','descripcion','ingredientes'];
+      if (!validos.includes(campo)) {
+        errorDiv.textContent = `❌ El campo '${campo}' no es válido para match. Sólo: ${validos.join(', ')}.`;
+        return;
+      }
+
+      // Construir parámetros según campo
+      let qs;
+      if (campo === 'precio') {
+        const num = parseFloat(valorRaw);
+        if (isNaN(num)) {
+          errorDiv.textContent = '❌ El precio debe ser un número válido.';
+          return;
+        }
+        qs = `precio=${num}`;
+      } else {
+        // Para ingredientes, puede ser cadena coma-separada
+        qs = `${encodeURIComponent(campo)}=${encodeURIComponent(valorRaw)}`;
+      }
+
+      try {
+        const resp = await fetch(`{{ url_for('match_menu') }}?${qs}`, { method: 'GET' });
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Error en la petición');
+        }
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = `❌ ${err.message}`;
+      }
+    });
+  </script>
+{% endblock %}

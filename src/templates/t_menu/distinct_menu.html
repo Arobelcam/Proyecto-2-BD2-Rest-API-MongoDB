@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Distinct de Menú – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consultas por agregación - distinct de menú</h2>
+  <form id="distinct-form" class="form-grid">
+    <label for="campo">Campo para distinct</label>
+    <input
+      type="text"
+      id="campo"
+      name="campo"
+      placeholder="IdRestaurante, nombre_plato, categoria, precio o ingredientes"
+      required
+    >
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('distinct-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const campo = ev.target.campo.value.trim();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // Campos válidos para distinct en menú
+      const validos = ['IdRestaurante','nombre_plato', 'categoria', 'precio', 'ingredientes'];
+      if (!validos.includes(campo)) {
+        errorDiv.textContent = `❌ El campo '${campo}' no es válido para distinct. Sólo: ${validos.join(', ')}.`;
+        return;
+      }
+
+      // Construir URL con query string
+      const url = `${window.location.pathname}?campo=${encodeURIComponent(campo)}`;
+
+      try {
+        const resp = await fetch(url, { method: 'GET' });
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Error en la petición');
+        }
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = `❌ ${err.message}`;
+      }
+    });
+  </script>
+{% endblock %}

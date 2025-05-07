@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}Pull de Ingredientes – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consultas por agregación arrays – $pull en menú</h2>
+
+  <form id="pull-form" class="form-grid">
+    <!-- ID del plato de menú -->
+    <label for="menu_id">ID Plato de Menú</label>
+    <input
+      type="text"
+      id="menu_id"
+      name="menu_id"
+      placeholder="ObjectId del plato de menú"
+      required
+    >
+
+    <!-- Campo fijo 'ingredientes' -->
+    <label for="campo">Campo</label>
+    <input
+      type="text"
+      id="campo"
+      name="campo"
+      value="ingredientes"
+      disabled
+    >
+
+    <!-- Valor(es) a eliminar -->
+    <label for="valor">Ingrediente(s) a pull</label>
+    <input
+      type="text"
+      id="valor"
+      name="valor"
+      placeholder="ingrediente1,ingrediente2,..."
+      required
+    >
+    <small class="form-note">Para varios, sepáralos con comas.</small>
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('pull-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      const menu_id = ev.target.menu_id.value.trim();
+      const campo   = ev.target.campo.value.trim();
+      const rawValor= ev.target.valor.value.trim();
+
+      // Validaciones
+      if (!menu_id) {
+        errorDiv.textContent = '❌ Por favor ingresa un ID de plato de menú válido.';
+        return;
+      }
+      if (campo !== 'ingredientes') {
+        errorDiv.textContent = `❌ Campo no válido (“${campo}”). Sólo “ingredientes” está permitido.`;
+        return;
+      }
+      if (!rawValor) {
+        errorDiv.textContent = '❌ Debes ingresar al menos un ingrediente para eliminar.';
+        return;
+      }
+
+      // Separar múltiples valores
+      const valores = rawValor.split(',').map(v => v.trim()).filter(v => v);
+      if (valores.length === 0) {
+        errorDiv.textContent = '❌ Ingresa valores válidos separados por comas.';
+        return;
+      }
+
+      const url = '{{ url_for("pull_menu") }}';
+      const responses = [];
+
+      // Ejecución uno por uno
+      for (let val of valores) {
+        try {
+          const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ menu_id, campo, valor: val })
+          });
+          const data = await resp.json();
+          responses.push({ ingrediente: val, status: resp.ok ? '✔️' : '❌', response: data });
+        } catch (err) {
+          responses.push({ ingrediente: val, status: '❌', response: { error: 'Error de conexión' } });
+        }
+      }
+
+      resultPre.textContent = JSON.stringify(responses, null, 2);
+    });
+  </script>
+{% endblock %}
