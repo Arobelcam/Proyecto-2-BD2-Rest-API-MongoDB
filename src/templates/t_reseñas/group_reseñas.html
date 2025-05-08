@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Group de Reseñas – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consultas por agregación - $group de reseñas</h2>
+  <form id="group-form" class="form-grid">
+    <label for="campo">Campo a agrupar</label>
+    <input
+      type="text"
+      id="campo"
+      name="campo"
+      placeholder="IdUsuario, IdRestaurante, IdPedido, calificacion, comentario o fecha"
+      required
+    >
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('group-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const campo    = ev.target.campo.value.trim();
+      const errorDiv = document.getElementById('error');
+      const resultPre= document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // Campos válidos para agrupación de reseñas
+      const validos = ['IdUsuario','IdRestaurante','IdPedido','calificacion','comentario','fecha'];
+      if (!validos.includes(campo)) {
+        errorDiv.textContent = `❌ El campo '${campo}' no es válido. Sólo: ${validos.join(', ')}.`;
+        return;
+      }
+
+      // Construir URL con parámetro de agrupación
+      const url = `{{ url_for('group_reseñas') }}?campo=${encodeURIComponent(campo)}`;
+
+      try {
+        const resp = await fetch(url, { method: 'GET' });
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Error en la petición');
+        }
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = `❌ ${err.message}`;
+      }
+    });
+  </script>
+{% endblock %}

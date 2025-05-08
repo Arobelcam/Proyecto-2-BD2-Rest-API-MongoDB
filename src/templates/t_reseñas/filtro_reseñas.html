@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}Filtro de Reseñas – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consulta de filtrado de reseñas</h2>
+
+  <form id="filter-form" class="form-grid">
+    <!-- Selección de campo -->
+    <label for="campo">Campo a filtrar</label>
+    <input
+      type="text"
+      id="campo"
+      name="campo"
+      placeholder="IdUsuario, IdRestaurante, IdPedido, calificacion, comentario o fecha"
+      required
+    >
+
+    <!-- Valor a buscar -->
+    <label for="valor">Valor</label>
+    <input
+      type="text"
+      id="valor"
+      name="valor"
+      placeholder="Valor a buscar"
+      required
+    >
+
+    <button type="submit" class="menu-grid__btn">Realizar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('filter-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const campo     = ev.target.campo.value.trim();
+      const valorRaw  = ev.target.valor.value.trim();
+      const errorDiv  = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // Campos válidos para reseñas
+      const validos = ['IdUsuario','IdRestaurante','IdPedido','calificacion','comentario','fecha'];
+      if (!validos.includes(campo)) {
+        errorDiv.textContent = `❌ Campo '${campo}' no válido. Sólo: ${validos.join(', ')}.`;
+        return;
+      }
+
+      // Construir query string
+      let qs;
+      if (campo === 'calificacion') {
+        const num = parseInt(valorRaw, 10);
+        if (isNaN(num)) {
+          errorDiv.textContent = '❌ La calificación debe ser un número entero.';
+          return;
+        }
+        qs = `calificacion=${num}`;
+      } else {
+        // IDs, comentario o fecha, pasamos tal cual
+        qs = `${encodeURIComponent(campo)}=${encodeURIComponent(valorRaw)}`;
+      }
+
+      try {
+        // Llamada al endpoint de filtro de reseñas
+        const resp = await fetch(`/reseñas/filtro_re?${qs}`, { method: 'GET' });
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Error en la consulta.');
+        }
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = `❌ ${err.message}`;
+      }
+    });
+  </script>
+{% endblock %}

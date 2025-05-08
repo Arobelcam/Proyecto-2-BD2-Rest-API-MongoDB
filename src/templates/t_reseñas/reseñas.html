@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Reseñas – API Restaurante{% endblock %}
+{% block content %}
+  <h2 class="section-title">Página de reseñas</h2>
+  <div class="menu-grid">
+    <a href="{{ url_for('crear_reseñas') }}" class="menu-grid__btn">Crear reseñas</a>
+    <a href="{{ url_for('consultas_reseñas') }}" class="menu-grid__btn">Consultas reseñas</a>
+    <a href="{{ url_for('actualizar_reseñas') }}" class="menu-grid__btn">Actualizar reseñas</a>
+    <a href="{{ url_for('eliminar_reseñas') }}" class="menu-grid__btn">Borrar reseñas</a>
+  </div>
+{% endblock %}
+
+

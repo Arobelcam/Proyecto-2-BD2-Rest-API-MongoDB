@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Aggregation Pipeline Reseñas – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Aggregation Pipeline de Reseñas</h2>
+
+  <form id="pipeline-form" class="form-grid">
+    <label for="min_calificacion">Calificación mínima</label>
+    <input
+      type="number"
+      id="min_calificacion"
+      name="min_calificacion"
+      min="1"
+      placeholder="1"
+      required
+    >
+
+    <label for="since_date">Desde fecha (opcional)</label>
+    <input
+      type="datetime-local"
+      id="since_date"
+      name="since_date"
+      placeholder="YYYY-MM-DDTHH:MM"
+    >
+
+    <label for="sort_order">Orden (1=ascendente, -1=descendente)</label>
+    <input
+      type="number"
+      id="sort_order"
+      name="sort_order"
+      placeholder="1 o -1"
+      required
+    >
+    <small>1 = ascendente; -1 = descendente</small>
+
+    <label for="limit">Límite de resultados</label>
+    <input
+      type="number"
+      id="limit"
+      name="limit"
+      min="1"
+      placeholder="5"
+      required
+    >
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('pipeline-form').addEventListener('submit', async function(ev) {
+      ev.preventDefault();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // 1) Validar calificación mínima
+      const minCal = parseInt(this.min_calificacion.value, 10);
+      if (isNaN(minCal) || minCal < 1) {
+        errorDiv.textContent = '❌ La calificación mínima debe ser un entero ≥ 1.';
+        return;
+      }
+
+      // 2) Leer fecha opcional
+      const sinceDate = this.since_date.value.trim();
+      // no client‐side ISO check, let server validate
+
+      // 3) Validar orden
+      const sortOrder = parseInt(this.sort_order.value, 10);
+      if (![1, -1].includes(sortOrder)) {
+        errorDiv.textContent = '❌ El orden debe ser 1 o -1.';
+        return;
+      }
+
+      // 4) Validar límite
+      const limitVal = parseInt(this.limit.value, 10);
+      if (!Number.isInteger(limitVal) || limitVal < 1) {
+        errorDiv.textContent = '❌ El límite debe ser un entero ≥ 1.';
+        return;
+      }
+
+      // 5) Enviar al servidor
+      const payload = {
+        min_calificacion: minCal,
+        sort_order: sortOrder,
+        limit: limitVal
+      };
+      if (sinceDate) payload.since_date = sinceDate;
+
+      try {
+        const resp = await fetch('{{ url_for("pipeline_reseñas") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Error en la consulta.');
+        }
+        resultPre.textContent = JSON.stringify(data.resultado, null, 2);
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = `❌ ${err.message}`;
+      }
+    });
+  </script>
+{% endblock %}

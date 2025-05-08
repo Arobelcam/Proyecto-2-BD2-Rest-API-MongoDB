@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Count de Reseñas – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consultas por agregación – count de reseñas</h2>
+  <form id="count-form" class="form-grid">
+    <label for="campo">Campo para count</label>
+    <input
+      type="text"
+      id="campo"
+      name="campo"
+      placeholder="IdUsuario, IdRestaurante, IdPedido, calificacion o fecha"
+      required
+    >
+
+    <label for="valor">Valor</label>
+    <input
+      type="text"
+      id="valor"
+      name="valor"
+      placeholder="Valor a contar"
+      required
+    >
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('count-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const campo    = ev.target.campo.value.trim();
+      const valorRaw = ev.target.valor.value.trim();
+      const errorDiv = document.getElementById('error');
+      const resultPre= document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // Campos válidos para count de reseñas
+      const validos = ['IdUsuario', 'IdRestaurante', 'IdPedido', 'calificacion', 'fecha'];
+      if (!validos.includes(campo)) {
+        errorDiv.textContent = `❌ Campo '${campo}' no válido. Sólo: ${validos.join(', ')}.`;
+        return;
+      }
+
+      let qs;
+      if (campo === 'calificacion') {
+        const num = parseInt(valorRaw, 10);
+        if (isNaN(num)) {
+          errorDiv.textContent = '❌ La calificación debe ser un entero válido.';
+          return;
+        }
+        qs = `calificacion=${num}`;
+      } else if (campo === 'fecha') {
+        // Validar ISO date
+        const fecha = new Date(valorRaw);
+        if (isNaN(fecha.getTime())) {
+          errorDiv.textContent = '❌ La fecha debe estar en formato ISO (YYYY-MM-DD o completo).';
+          return;
+        }
+        qs = `fecha=${encodeURIComponent(valorRaw)}`;
+      } else {
+        // IdUsuario, IdRestaurante o IdPedido
+        qs = `${encodeURIComponent(campo)}=${encodeURIComponent(valorRaw)}`;
+      }
+
+      try {
+        const resp = await fetch(`{{ url_for('count_reseñas') }}?${qs}`, {
+          method: 'GET'
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Error en la petición.');
+        }
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = `❌ ${err.message}`;
+      }
+    });
+  </script>
+{% endblock %}

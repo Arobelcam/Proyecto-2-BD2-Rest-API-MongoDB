@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Actualizar Reseñas – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Actualizar Reseñas</h2>
+
+  <div class="form-grid">
+    <!-- Paso 1: Indicar cantidad de reseñas a actualizar -->
+    <label for="review-count">Cantidad de reseñas a actualizar</label>
+    <input
+      type="number"
+      id="review-count"
+      min="1"
+      placeholder="Ingresa número de reseñas"
+      required
+    >
+  </div>
+
+  <!-- Contenedor dinámico para los formularios individuales -->
+  <div id="form-container"></div>
+
+  <!-- Botones de navegación -->
+  <div class="actions">
+    <button id="next-btn" class="menu-grid__btn" disabled>Siguiente</button>
+    <button id="update-btn" class="menu-grid__btn" style="display:none;">Actualizar Reseñas</button>
+  </div>
+
+  <!-- Mensaje de resultado -->
+  <div id="message" class="message"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const countInput = document.getElementById('review-count');
+      const formContainer = document.getElementById('form-container');
+      const nextBtn = document.getElementById('next-btn');
+      const updateBtn = document.getElementById('update-btn');
+      const messageDiv = document.getElementById('message');
+
+      let totalCount = 0;
+      let currentIndex = 0;
+      const updateData = [];
+
+      countInput.addEventListener('input', () => {
+        totalCount = parseInt(countInput.value, 10) || 0;
+        updateData.length = 0;
+        currentIndex = 0;
+        messageDiv.textContent = '';
+        formContainer.innerHTML = '';
+        nextBtn.disabled = totalCount < 1;
+        nextBtn.style.display = totalCount > 0 ? 'inline-block' : 'none';
+        updateBtn.style.display = 'none';
+      });
+
+      nextBtn.addEventListener('click', () => {
+        const formEl = formContainer.querySelector('form');
+        // Si no hay formulario, generar el primero
+        if (!formEl) {
+          generateForm();
+          return;
+        }
+        const formData = new FormData(formEl);
+        const review = { id: formData.get('id').trim() };
+
+        // Incluir solo los campos que tengan valor
+        const flds = ['IdUsuario','IdRestaurante','IdPedido','calificacion','comentario','fecha'];
+        flds.forEach(fld => {
+          const val = formData.get(fld).trim();
+          if (!val) return;
+          if (fld === 'calificacion') {
+            review[fld] = parseInt(val, 10);
+          } else if (fld === 'fecha') {
+            review[fld] = val;  // enviar ISO string
+          } else {
+            review[fld] = val;
+          }
+        });
+
+        updateData.push(review);
+        currentIndex++;
+
+        if (currentIndex < totalCount) {
+          generateForm();
+        } else {
+          formContainer.innerHTML = '';
+          nextBtn.style.display = 'none';
+          updateBtn.style.display = 'inline-block';
+        }
+      });
+
+      updateBtn.addEventListener('click', async () => {
+        try {
+          const resp = await fetch('{{ url_for("actualizar_reseñas") }}', {
+            method: 'PUT',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify(updateData)
+          });
+          const result = await resp.json();
+          messageDiv.textContent = result.mensaje || `Se actualizaron ${updateData.length} reseña(s) correctamente.`;
+          updateBtn.disabled = true;
+        } catch (err) {
+          messageDiv.textContent = '❌ Error al actualizar reseñas.';
+        }
+      });
+
+      function generateForm() {
+        formContainer.innerHTML = `
+          <form class="form-grid">
+            <h3>Reseña ${currentIndex + 1} de ${totalCount}</h3>
+            <input
+              type="text"
+              name="id"
+              placeholder="ID de reseña (ObjectId)"
+              required
+            >
+            <input
+              type="text"
+              name="IdUsuario"
+              placeholder="ID Usuario (opcional)"
+            >
+            <input
+              type="text"
+              name="IdRestaurante"
+              placeholder="ID Restaurante (opcional)"
+            >
+            <input
+              type="text"
+              name="IdPedido"
+              placeholder="ID Pedido (opcional)"
+            >
+            <input
+              type="number"
+              name="calificacion"
+              min="0"
+              max="5"
+              placeholder="Calificación (0–5, opcional)"
+            >
+            <input
+              type="text"
+              name="comentario"
+              placeholder="Comentario (opcional)"
+            >
+            <input
+              type="datetime-local"
+              name="fecha"
+              placeholder="Fecha y hora (opcional)"
+            >
+          </form>
+        `;
+      }
+    });
+  </script>
+{% endblock %}

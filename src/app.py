@@ -840,7 +840,7 @@ def lookup_pedidos():
         return jsonify(resultado)
     return render_template('t_pedidos/lookup_pedidos.html')
 
-#Actualizar articulo menu
+#Actualizar pedidos
 @app.route('/pedidos/actualizar_p', methods=['GET', 'PUT'])
 def actualizar_pedidos():
     if request.method == 'PUT':
@@ -849,7 +849,7 @@ def actualizar_pedidos():
         return jsonify(resultado), 200
     return render_template('t_pedidos/actualizar_pedidos.html')
 
-#Eliminar usuarios
+#Eliminar pedidos
 @app.route('/pedidos/eliminar_p', methods=['GET', 'DELETE'])
 def eliminar_pedidos():
     if request.method == 'DELETE':
@@ -858,11 +858,150 @@ def eliminar_pedidos():
         return jsonify(resultado), 200
     return render_template('t_pedidos/eliminar_pedidos.html')
 
+
+
 ### LANDING PAGE RESEÑAS -----------------------------------------------------------------------------------------------------
 @app.route('/reseñas')
 def home_resenas():
-    return render_template('t_resenas/resenas.html')
+    return render_template('t_reseñas/reseñas.html')
 
+@app.route('/reseñas/crear_re', methods=['GET', 'POST'])
+def crear_reseñas():
+    if request.method == 'POST':
+        data = request.get_json()         # JSON enviado desde el cliente
+        resultado = crear_reseñas_servicio(data)
+        # Puedes devolver un status code 201 si creaste con éxito
+        return jsonify(resultado), 201
+    return render_template('t_reseñas/crear_reseñas.html')
+### CONSULTAS
+
+@app.route('/reseñas/consultas_re')
+def consultas_reseñas():
+    # esta será la landing de consultas: match vs aggregation
+    return render_template('t_reseñas/consultas_reseñas.html')
+
+### CONSULTAS A DOCUMENTOS
+@app.route('/reseñas/consultas_re/consul-documentos_re')
+def consultas_documentos_reseñas():
+    return render_template('t_reseñas/consultas_documentos_reseñas.html')
+
+# — Filtro —
+@app.route('/reseñas/consultas_re/consul-documentos_re/filtro_re', methods=['GET', 'POST'])
+def filtro_reseñas():
+    if request.method == 'POST':
+        resultado = get_reseñas_filtros_servicio()
+        return jsonify(resultado)
+    return render_template('t_reseñas/filtro_reseñas.html')
+
+# — Proyección —
+@app.route('/reseñas/consultas_re/consul-documentos_re/proyeccion_re', methods=['GET', 'POST'])
+def proyeccion_reseñas():
+    if request.method == 'POST':
+        resultado = get_reseñas_proyeccion_servicio()
+        return jsonify(resultado)
+    return render_template('t_reseñas/proyeccion_reseñas.html')
+
+# — Ordenamiento —
+@app.route('/reseñas/consultas_re/consul-documentos_re/ordenamiento_re', methods=['GET', 'POST'])
+def ordenamiento_reseñas():
+    if request.method == 'POST':
+        resultado = get_reseñas_ordenamiento_servicio()
+        return jsonify(resultado)
+    return render_template('t_reseñas/ordenamiento_reseñas.html')
+
+# — Limit —
+@app.route('/reseñas/consultas_re/consul-documentos_re/limit_re', methods=['GET', 'POST'])
+def limit_reseñas():
+    # Si es POST (desde formulario JSON) o viene el query param `limit`, devolvemos datos
+    if request.method == 'POST' or 'limit' in request.args:
+        resultado = get_reseñas_limit_servicio()
+        return jsonify(resultado)
+    # Si es GET sin limit, sirvo la página HTML
+    return render_template('t_reseñas/limit_reseñas.html')
+
+# — Skip —
+@app.route('/reseñas/consultas_re/consul-documentos_re/skip_re', methods=['GET', 'POST'])
+def skip_reseñas():
+    if request.method == 'POST' or 'skip' in request.args:
+        resultado = get_reseñas_skip_servicio()
+        return jsonify(resultado)
+    # Si es GET sin skips, sirvo la página HTML
+    return render_template('t_reseñas/skip_reseñas.html')
+
+
+### CONSULTAS POR AGREGACION
+@app.route('/reseñas/consultas_re/consul-agregacion_re')
+def consultas_agregacion_reseñas():
+    return render_template('t_reseñas/consultas_agregacion_reseñas.html')
+
+### simples
+@app.route('/reseñas/consultas_re/consul-agregacion_re/simple_re')
+def agregacion_simple_reseñas():
+    return render_template('t_reseñas/agregacion_simple_reseñas.html')
+
+# — Match —  
+@app.route('/reseñas/consultas_re/consul-agregacion_re/simple_re/match_re', methods=['GET', 'POST'])
+def match_reseñas():
+    if request.method == 'POST' or bool(request.args):
+        resultado = get_reseñas_match_servicio()
+        return jsonify(resultado)
+    return render_template('t_reseñas/match_reseñas.html')
+
+# — Group —  
+@app.route('/reseñas/consultas_re/consul-agregacion_re/simple_re/group_re', methods=['GET', 'POST'])
+def group_reseñas():
+    if request.method == 'POST' or bool(request.args):
+        resultado = get_reseñas_group_servicio()
+        return jsonify(resultado)
+    return render_template('t_reseñas/group_reseñas.html')
+
+# — Count — 
+@app.route('/reseñas/consultas_re/consul-agregacion_re/simple_re/count_re', methods=['GET', 'POST'])
+def count_reseñas():
+    # Si llega body JSON o query params no vacíos, llamamos al servicio
+    if request.method == 'POST' or bool(request.args):
+        # tu servicio lee request.get_json() o request.args
+        resultado = get_reseñas_count_servicio()
+        return jsonify(resultado)
+    return render_template('t_reseñas/count_reseñas.html')
+
+# — Distinct —
+@app.route('/reseñas/consultas_re/consul-agregacion_re/simple_re/distinct_re', methods=['GET', 'POST'])
+def distinct_reseñas():
+    if request.method == 'POST' or bool(request.args):
+        resultado = get_reseñas_distinct_servicio()
+        return jsonify(resultado)
+    return render_template('t_reseñas/distinct_reseñas.html')
+
+
+### agg pipeline
+@app.route('/reseñas/consultas_re/consul-agregacion_re/pipeline_re', methods=['GET','POST'])
+def pipeline_reseñas():
+    if request.method == 'POST':
+        # No necesitas leer aquí request.get_json() ni pasarlo al servicio
+        resultado = aggregation_pipeline_reseñas_servicio()
+        return jsonify(resultado), 200
+
+    # GET: renderizamos el formulario
+    return render_template('t_reseñas/pipeline_reseñas.html')
+
+#Actualizar reseñas
+@app.route('/reseñas/actualizar_re', methods=['GET', 'PUT'])
+def actualizar_reseñas():
+    if request.method == 'PUT':
+        data = request.get_json()  
+        resultado = actualizar_reseñas_servicio(data)
+        return jsonify(resultado), 200
+    return render_template('t_reseñas/actualizar_reseñas.html')
+
+#Eliminar reseñas
+@app.route('/reseñas/eliminar_re', methods=['GET', 'DELETE'])
+def eliminar_reseñas():
+    if request.method == 'DELETE':
+        data = request.get_json()              
+        resultado = eliminar_reseñas_servicio(data)
+        return jsonify(resultado), 200
+    return render_template('t_reseñas/eliminar_reseñas.html')
 
 
 if __name__ == "__main__":
