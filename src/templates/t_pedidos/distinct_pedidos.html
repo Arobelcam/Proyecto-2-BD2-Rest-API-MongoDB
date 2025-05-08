@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Distinct de Pedidos – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consultas por agregación - distinct de pedidos</h2>
+  <form id="distinct-form" class="form-grid">
+    <label for="campo">Campo para distinct</label>
+    <input
+      type="text"
+      id="campo"
+      name="campo"
+      placeholder="IdUsuario, IdRestaurante, IdPlato, estado, total o fecha_pedido"
+      required
+    >
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('distinct-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const campo = ev.target.campo.value.trim();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // Campos válidos para distinct en pedidos
+      const validos = ['IdUsuario','IdRestaurante','IdPlato','estado','total','fecha_pedido'];
+      if (!validos.includes(campo)) {
+        errorDiv.textContent = `❌ El campo '${campo}' no es válido para distinct. Sólo: ${validos.join(', ')}.`;
+        return;
+      }
+
+      // Construir URL endpoint
+      const url = `{{ url_for('distinct_pedidos') }}?campo=${encodeURIComponent(campo)}`;
+
+      try {
+        const resp = await fetch(url, { method: 'GET' });
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Error en la petición');
+        }
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = `❌ ${err.message}`;
+      }
+    });
+  </script>
+{% endblock %}

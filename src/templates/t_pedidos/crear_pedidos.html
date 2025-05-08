@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+
+{% block title %}Crear Pedidos – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Crear Pedidos</h2>
+  <div class="form-grid">
+    <!-- Paso 1: Indicar cantidad de pedidos -->
+    <label for="order-count">Cantidad de pedidos a crear</label>
+    <input type="number" id="order-count" min="1" placeholder="Ingresa número de pedidos" required>
+  </div>
+
+  <!-- Contenedor dinámico para los formularios de pedidos -->
+  <div id="form-container"></div>
+
+  <!-- Botones de navegación -->
+  <div class="actions">
+    <button id="next-btn" class="menu-grid__btn" disabled>Siguiente</button>
+    <button id="create-btn" class="menu-grid__btn" style="display:none;">Crear Pedidos</button>
+  </div>
+
+  <!-- Mensaje de resultado -->
+  <div id="message" class="message"></div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const countInput = document.getElementById('order-count');
+      const formContainer = document.getElementById('form-container');
+      const nextBtn = document.getElementById('next-btn');
+      const createBtn = document.getElementById('create-btn');
+      const messageDiv = document.getElementById('message');
+
+      let totalCount = 0;
+      let currentIndex = 0;
+      const ordersData = [];
+
+      countInput.addEventListener('input', () => {
+        totalCount = parseInt(countInput.value, 10) || 0;
+        ordersData.length = 0;
+        currentIndex = 0;
+        messageDiv.textContent = '';
+        formContainer.innerHTML = '';
+        nextBtn.disabled = totalCount < 1;
+        nextBtn.style.display = totalCount > 0 ? 'inline-block' : 'none';
+        createBtn.style.display = 'none';
+      });
+
+      nextBtn.addEventListener('click', () => {
+        const formEl = formContainer.querySelector('form');
+        if (!formEl) {
+          renderForm();
+          return;
+        }
+        // Leer datos del formulario actual
+        const formData = new FormData(formEl);
+        const itemCount = parseInt(formData.get('item-count'), 10) || 0;
+        const items = [];
+        for (let i = 1; i <= itemCount; i++) {
+          const pid = formData.get(`IdPlato_${i}`).trim();
+          const cantidad = formData.get(`cantidad_${i}`).trim();
+          const precio = formData.get(`precio_${i}`).trim();
+          if (pid && cantidad && precio) {
+            items.push({ IdPlato: pid, cantidad: parseInt(cantidad,10), precio: parseFloat(precio) });
+          }
+        }
+        const orderObj = {
+          IdUsuario: formData.get('IdUsuario').trim(),
+          IdRestaurante: formData.get('IdRestaurante').trim(),
+          items,
+          total: parseFloat(formData.get('total')),
+          fecha_pedido: formData.get('fecha_pedido'),
+          estado: formData.get('estado').trim()
+        };
+        ordersData.push(orderObj);
+        currentIndex++;
+
+        if (currentIndex < totalCount) {
+          renderForm();
+        } else {
+          formContainer.innerHTML = '';
+          nextBtn.style.display = 'none';
+          createBtn.style.display = 'inline-block';
+        }
+      });
+
+      createBtn.addEventListener('click', async () => {
+        try {
+          const resp = await fetch('{{ url_for('crear_pedidos') }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(ordersData)
+          });
+          const result = await resp.json();
+          messageDiv.textContent = result.mensaje || `Se crearon ${ordersData.length} pedido(s) correctamente.`;
+          createBtn.disabled = true;
+        } catch (err) {
+          messageDiv.textContent = 'Error al crear pedidos.';
+        }
+      });
+
+      function renderForm() {
+        formContainer.innerHTML = `
+          <form class="form-grid">
+            <h3>Pedido ${currentIndex + 1} de ${totalCount}</h3>
+            <input type="text" name="IdUsuario" placeholder="IdUsuario (ObjectId)" required>
+            <input type="text" name="IdRestaurante" placeholder="IdRestaurante (ObjectId)" required>
+            <label for="item-count">Cantidad de items</label>
+            <input type="number" id="item-count" name="item-count" min="1" placeholder="# ítems" required>
+            <div id="items-container"></div>
+            <input type="text" name="total" placeholder="Total" required>
+            <input type="datetime-local" name="fecha_pedido" required>
+            <input type="text" name="estado" placeholder="Estado" required>
+          </form>
+        `;
+        const itemCountInput = formContainer.querySelector('#item-count');
+        const itemsContainer = formContainer.querySelector('#items-container');
+        itemCountInput.addEventListener('change', () => {
+          const count = parseInt(itemCountInput.value, 10) || 0;
+          let html = '';
+          for (let i = 1; i <= count; i++) {
+            html += `
+              <h4>Item ${i}</h4>
+              <input type="text" name="IdPlato_${i}" placeholder="IdPlato (ObjectId)" required>
+              <input type="number" name="cantidad_${i}" placeholder="Cantidad" min="1" required>
+              <input type="number" step="0.01" name="precio_${i}" placeholder="Precio" required>
+            `;
+          }
+          itemsContainer.innerHTML = html;
+        });
+      }
+    });
+  </script>
+{% endblock %}
+

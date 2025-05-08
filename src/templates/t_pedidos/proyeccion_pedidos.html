@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Proyección de Pedidos – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consulta de proyección de documentos de pedidos</h2>
+  <form id="proj-form" class="form-grid">
+    <!-- Campos disponibles en pedidos -->
+    <label for="IdUsuario">IdUsuario</label>
+    <input type="number" id="IdUsuario" name="IdUsuario" placeholder="1=incluye,0=excluye" required>
+
+    <label for="IdRestaurante">IdRestaurante</label>
+    <input type="number" id="IdRestaurante" name="IdRestaurante" placeholder="1 o 0" required>
+
+    <label for="items">Items</label>
+    <input type="number" id="items" name="items" placeholder="1 o 0" required>
+
+    <label for="total">Total</label>
+    <input type="number" step="0.01" id="total" name="total" placeholder="1 o 0" required>
+
+    <label for="fecha_pedido">Fecha Pedido</label>
+    <input type="number" id="fecha_pedido" name="fecha_pedido" placeholder="1 o 0" required>
+
+    <label for="estado">Estado</label>
+    <input type="number" id="estado" name="estado" placeholder="1 o 0" required>
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('proj-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const errorDiv  = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      const fields = ['IdUsuario','IdRestaurante','items','total','fecha_pedido','estado'];
+      const payload = {};
+
+      for (let f of fields) {
+        const val = ev.target[f].value.trim();
+        if (val !== '0' && val !== '1') {
+          errorDiv.textContent = '❌ Sólo 1 (incluye) o 0 (excluye) son válidos.';
+          return;
+        }
+        payload[f] = parseInt(val, 10);
+      }
+
+      try {
+        const resp = await fetch('{{ url_for("proyeccion_pedidos") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Error en la consulta.');
+        }
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = `❌ ${err.message}`;
+      }
+    });
+  </script>
+{% endblock %}

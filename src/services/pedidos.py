@@ -343,11 +343,7 @@ def get_pedidos_skip_servicio():
 #Simples
 #Funcion de servicio count pedidos
 def get_pedidos_count_servicio():
-    """
-    Cuenta documentos en pedidos según filtros opcionales:
-    IdUsuario, IdRestaurante, IdPlato, estado, total, fecha_pedido.
-    Ejemplo: /api/pedidos/count?IdUsuario=...&estado=pendiente
-    """
+    
     data = request.args
     filtros = {}
 

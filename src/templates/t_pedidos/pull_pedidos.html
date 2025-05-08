@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}Pull de Ítems – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consultas por agregación arrays – $pull en pedidos</h2>
+
+  <form id="pull-form" class="form-grid">
+    <!-- ID del pedido -->
+    <label for="pedido_id">ID Pedido</label>
+    <input
+      type="text"
+      id="pedido_id"
+      name="pedido_id"
+      placeholder="ObjectId del pedido"
+      required
+    >
+
+    <!-- IDs de plato a eliminar -->
+    <label for="IdPlato">ID(s) Plato a pull</label>
+    <input
+      type="text"
+      id="IdPlato"
+      name="IdPlato"
+      placeholder="IdPlato1,IdPlato2,..."
+      required
+    >
+    <small class="form-note">Para varios, sepáralos con comas.</small>
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('pull-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      const pedido_id = ev.target.pedido_id.value.trim();
+      const rawIds = ev.target.IdPlato.value.trim();
+
+      // Validaciones
+      if (!pedido_id) {
+        errorDiv.textContent = '❌ Por favor ingresa un ID de pedido válido.';
+        return;
+      }
+      if (!rawIds) {
+        errorDiv.textContent = '❌ Debes ingresar al menos un IdPlato.';
+        return;
+      }
+
+      const ids = rawIds.split(',').map(s => s.trim()).filter(s => s);
+      if (ids.length === 0) {
+        errorDiv.textContent = '❌ Ingresa IDs válidos separados por comas.';
+        return;
+      }
+
+      const url = '{{ url_for("pull_pedidos") }}';
+      const responses = [];
+
+      for (let id of ids) {
+        try {
+          const resp = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pedido_id, IdPlato: id })
+          });
+          const data = await resp.json();
+          responses.push({
+            IdPlato: id,
+            status: resp.ok ? '✔️' : '❌',
+            response: data
+          });
+        } catch (err) {
+          responses.push({
+            IdPlato: id,
+            status: '❌',
+            response: { error: 'Error de conexión' }
+          });
+        }
+      }
+
+      resultPre.textContent = JSON.stringify(responses, null, 2);
+    });
+  </script>
+{% endblock %}

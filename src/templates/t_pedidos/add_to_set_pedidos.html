@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% block title %}AddToSet de Ítems – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consultas por agregación arrays – $addToSet en pedidos</h2>
+
+  <form id="addtoset-form" class="form-grid">
+    <!-- ID del pedido -->
+    <label for="pedido_id">ID Pedido</label>
+    <input
+      type="text"
+      id="pedido_id"
+      name="pedido_id"
+      placeholder="ObjectId del pedido"
+      required
+    >
+
+    <!-- ID del plato -->
+    <label for="IdPlato">ID Plato</label>
+    <input
+      type="text"
+      id="IdPlato"
+      name="IdPlato"
+      placeholder="ObjectId del plato"
+      required
+    >
+
+    <!-- Cantidad -->
+    <label for="cantidad">Cantidad</label>
+    <input
+      type="number"
+      id="cantidad"
+      name="cantidad"
+      min="1"
+      placeholder="Cantidad"
+      required
+    >
+
+    <!-- Precio -->
+    <label for="precio">Precio</label>
+    <input
+      type="number"
+      id="precio"
+      name="precio"
+      step="0.01"
+      placeholder="Precio del plato"
+      required
+    >
+
+    <button type="submit" class="menu-grid__btn">Agregar Ítem</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('addtoset-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      const pedido_id = ev.target.pedido_id.value.trim();
+      const IdPlato = ev.target.IdPlato.value.trim();
+      const cantidadVal = ev.target.cantidad.value.trim();
+      const precioVal = ev.target.precio.value.trim();
+
+      // Validaciones básicas
+      if (!pedido_id) {
+        errorDiv.textContent = '❌ Por favor ingresa un ID de pedido válido.';
+        return;
+      }
+      if (!IdPlato) {
+        errorDiv.textContent = '❌ Por favor ingresa un ID de plato válido.';
+        return;
+      }
+      const cantidadNum = parseInt(cantidadVal, 10);
+      if (isNaN(cantidadNum) || cantidadNum < 1) {
+        errorDiv.textContent = '❌ Ingresa una cantidad válida (entero ≥ 1).';
+        return;
+      }
+      const precioNum = parseFloat(precioVal);
+      if (isNaN(precioNum) || precioNum < 0) {
+        errorDiv.textContent = '❌ Ingresa un precio válido (número ≥ 0).';
+        return;
+      }
+
+      // Construir y enviar petición
+      try {
+        const resp = await fetch('{{ url_for("add_to_set_pedidos") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            pedido_id,
+            item: {
+              IdPlato,
+              cantidad: cantidadNum,
+              precio: precioNum
+            }
+          })
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Error en la petición.');
+        }
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        errorDiv.textContent = `❌ ${err.message}`;
+      }
+    });
+  </script>
+{% endblock %}

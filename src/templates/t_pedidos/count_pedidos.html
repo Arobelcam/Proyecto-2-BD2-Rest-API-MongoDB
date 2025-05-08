@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Count de Pedidos – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consultas por agregación - count de pedidos</h2>
+  <form id="count-form" class="form-grid">
+    <label for="campo">Campo para count</label>
+    <input
+      type="text"
+      id="campo"
+      name="campo"
+      placeholder="IdUsuario, IdRestaurante, IdPlato, estado, total o fecha_pedido"
+      required
+    >
+
+    <label for="valor">Valor</label>
+    <input
+      type="text"
+      id="valor"
+      name="valor"
+      placeholder="Valor a contar"
+      required
+    >
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('count-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const campo    = ev.target.campo.value.trim();
+      const valorRaw = ev.target.valor.value.trim();
+      const errorDiv = document.getElementById('error');
+      const resultPre= document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // Campos válidos para count de pedidos
+      const validos = ['IdUsuario','IdRestaurante','IdPlato','estado','total','fecha_pedido'];
+      if (!validos.includes(campo)) {
+        errorDiv.textContent = `❌ Campo '${campo}' no válido. Sólo: ${validos.join(', ')}.`;
+        return;
+      }
+
+      let qs;
+      if (campo === 'total') {
+        const num = parseFloat(valorRaw);
+        if (isNaN(num)) {
+          errorDiv.textContent = '❌ El total debe ser un número válido.';
+          return;
+        }
+        qs = `total=${num}`;
+      } else if (campo === 'fecha_pedido') {
+        const fecha = new Date(valorRaw);
+        if (isNaN(fecha.getTime())) {
+          errorDiv.textContent = '❌ La fecha debe estar en formato ISO válido.';
+          return;
+        }
+        qs = `fecha_pedido=${encodeURIComponent(valorRaw)}`;
+      } else {
+        // IdUsuario, IdRestaurante, IdPlato o estado
+        qs = `${encodeURIComponent(campo)}=${encodeURIComponent(valorRaw)}`;
+      }
+
+      try {
+        const resp = await fetch(`{{ url_for('count_pedidos') }}?${qs}`, {
+          method: 'GET'
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Error en la petición.');
+        }
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = `❌ ${err.message}`;
+      }
+    });
+  </script>
+{% endblock %}

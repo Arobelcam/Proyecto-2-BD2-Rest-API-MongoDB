@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block title %}Push de Ítems – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consultas por agregación arrays – $push en pedidos</h2>
+
+  <form id="push-form" class="form-grid">
+    <!-- ID del pedido -->
+    <label for="pedido_id">ID Pedido</label>
+    <input
+      type="text"
+      id="pedido_id"
+      name="pedido_id"
+      placeholder="ObjectId del pedido"
+      required
+    >
+
+    <!-- Campo fijo 'items' -->
+    <label for="campo">Campo</label>
+    <input
+      type="text"
+      id="campo"
+      name="campo"
+      value="items"
+      disabled
+    >
+
+    <!-- Nuevo ítem -->
+    <label for="IdPlato">ID Plato</label>
+    <input
+      type="text"
+      id="IdPlato"
+      name="IdPlato"
+      placeholder="ObjectId del plato"
+      required
+    >
+
+    <label for="cantidad">Cantidad</label>
+    <input
+      type="number"
+      id="cantidad"
+      name="cantidad"
+      placeholder="Número entero"
+      min="1"
+      required
+    >
+
+    <label for="precio">Precio</label>
+    <input
+      type="number"
+      id="precio"
+      name="precio"
+      placeholder="Número (ej. 12.50)"
+      step="0.01"
+      min="0"
+      required
+    >
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    const form = document.getElementById('push-form');
+    const errorDiv = document.getElementById('error');
+    const resultPre = document.getElementById('resultado');
+
+    form.addEventListener('submit', async ev => {
+      ev.preventDefault();
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      const pedido_id = form.pedido_id.value.trim();
+      const rawIdPlato = form.IdPlato.value.trim();
+      const rawCantidad = form.cantidad.value.trim();
+      const rawPrecio = form.precio.value.trim();
+
+      // Validaciones básicas
+      if (!pedido_id) {
+        errorDiv.textContent = '❌ Por favor ingresa un ID de pedido válido.';
+        return;
+      }
+      if (!rawIdPlato) {
+        errorDiv.textContent = '❌ Por favor ingresa un ID de plato válido.';
+        return;
+      }
+      const cantidad = parseInt(rawCantidad, 10);
+      if (isNaN(cantidad) || cantidad < 1) {
+        errorDiv.textContent = '❌ La cantidad debe ser un entero mayor o igual a 1.';
+        return;
+      }
+      const precio = parseFloat(rawPrecio);
+      if (isNaN(precio) || precio < 0) {
+        errorDiv.textContent = '❌ El precio debe ser un número válido y no negativo.';
+        return;
+      }
+
+      const url = '{{ url_for("push_pedidos") }}';
+      const payload = {
+        pedido_id,
+        item: {
+          IdPlato: rawIdPlato,
+          cantidad,
+          precio
+        }
+      };
+
+      try {
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Error en la petición');
+        }
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = `❌ ${err.message}`;
+      }
+    });
+  </script>
+{% endblock %}

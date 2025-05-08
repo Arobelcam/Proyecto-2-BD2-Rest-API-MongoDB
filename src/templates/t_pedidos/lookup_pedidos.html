@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Lookup de Pedidos – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consultas por agregación embedded lookup en pedidos</h2>
+
+  <form id="lookup-form" class="form-grid">
+    <!-- ID del pedido -->
+    <label for="pedido_id">ID Pedido</label>
+    <input
+      type="text"
+      id="pedido_id"
+      name="pedido_id"
+      placeholder="ObjectId del pedido (24 hex dígitos)"
+      required
+    >
+
+    <button type="submit" class="menu-grid__btn">Hacer lookup</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('lookup-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // 1) Validar ID de pedido como 24 dígitos hexadecimales
+      const rawId = ev.target.pedido_id.value.trim();
+      const oidPattern = /^[0-9a-fA-F]{24}$/;
+      if (!oidPattern.test(rawId)) {
+        errorDiv.textContent = '❌ El ID del pedido debe tener 24 caracteres hexadecimales.';
+        return;
+      }
+
+      // 2) Construir payload
+      const payload = { pedido_id: rawId };
+
+      // 3) Enviar POST al endpoint de lookup_pedidos
+      try {
+        const resp = await fetch('{{ url_for("lookup_pedidos") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Error en la consulta.');
+        }
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        errorDiv.textContent = `❌ ${err.message}`;
+      }
+    });
+  </script>
+{% endblock %}

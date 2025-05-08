@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Consultas por agregación simples Pedidos – API Restaurante{% endblock %}
+{% block content %}
+  <h2 class="section-title">Consulta por agregación simples pedidos</h2>
+  <div class="menu-grid">
+    <a href="{{ url_for('agregacion_simple_pedidos') }}" class="menu-grid__btn">Simple</a>
+    <a href="{{ url_for('pipeline_pedidos') }}" class="menu-grid__btn">Agreggation Pipeline</a>
+    <a href="{{ url_for('agregacion_arrays_pedidos') }}" class="menu-grid__btn">Manejo de Arrays</a>
+    <a href="{{ url_for('agregacion_embedded_pedidos') }}" class="menu-grid__btn">Manejo de Embeddeds</a>
+  </div>
+{% endblock %}

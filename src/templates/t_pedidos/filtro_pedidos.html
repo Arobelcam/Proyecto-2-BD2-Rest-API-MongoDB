@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}Filtro de Pedidos – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Consulta de filtrado de documentos de pedidos</h2>
+
+  <form id="filter-form" class="form-grid">
+    <!-- Selección de campo -->
+    <label for="campo">Campo a filtrar</label>
+    <input
+      type="text"
+      id="campo"
+      name="campo"
+      placeholder="IdUsuario, IdRestaurante, IdPlato, estado, total o fecha_pedido"
+      required
+    >
+
+    <!-- Valor a buscar -->
+    <label for="valor">Valor</label>
+    <input
+      type="text"
+      id="valor"
+      name="valor"
+      placeholder="Valor a buscar"
+      required
+    >
+
+    <button type="submit" class="menu-grid__btn">Realizar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('filter-form').addEventListener('submit', async ev => {
+      ev.preventDefault();
+      const campo     = ev.target.campo.value.trim();
+      const valorRaw  = ev.target.valor.value.trim();
+      const errorDiv  = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // Campos válidos para pedidos
+      const validos = ['IdUsuario','IdRestaurante','IdPlato','estado','total','fecha_pedido'];
+      if (!validos.includes(campo)) {
+        errorDiv.textContent = `❌ Campo '${campo}' no válido. Sólo: ${validos.join(', ')}.`;
+        return;
+      }
+
+      // Construir query string
+      let qs;
+      if (campo === 'total') {
+        const num = parseFloat(valorRaw);
+        if (isNaN(num)) {
+          errorDiv.textContent = '❌ El total debe ser un número válido.';
+          return;
+        }
+        qs = `total=${num}`;
+      } else {
+        // para fechas y IDs y estado, enviamos tal cual
+        qs = `${encodeURIComponent(campo)}=${encodeURIComponent(valorRaw)}`;
+      }
+
+      try {
+        const resp = await fetch(`/pedidos/filtro_p?${qs}`, {
+          method: 'GET'
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          throw new Error(data.error || 'Error en la consulta.');
+        }
+        resultPre.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = `❌ ${err.message}`;
+      }
+    });
+  </script>
+{% endblock %}

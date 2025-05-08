@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Aggregation Pipeline Pedidos – API Restaurante{% endblock %}
+
+{% block content %}
+  <h2 class="section-title">Aggregation Pipeline de Pedidos</h2>
+
+  <form id="pipeline-form" class="form-grid">
+    <label for="estado">Estado</label>
+    <input
+      type="text"
+      id="estado"
+      name="estado"
+      placeholder="Ej: pendiente, enviado, entregado"
+      required
+    >
+
+    <label for="sort_by">Criterio de ordenamiento</label>
+    <input
+      type="text"
+      id="sort_by"
+      name="sort_by"
+      placeholder="cantidad o ingresos"
+      required
+    >
+    <small>"cantidad" = ordenar por cantidad_total; "ingresos" = ordenar por ingresos_totales</small>
+
+    <label for="limit">Límite de resultados</label>
+    <input
+      type="number"
+      id="limit"
+      name="limit"
+      min="1"
+      placeholder="5"
+      required
+    >
+
+    <button type="submit" class="menu-grid__btn">Generar consulta</button>
+  </form>
+
+  <div id="error" class="message error"></div>
+  <pre id="resultado" class="message"></pre>
+
+  <script>
+    document.getElementById('pipeline-form').addEventListener('submit', async function(ev) {
+      ev.preventDefault();
+      const errorDiv = document.getElementById('error');
+      const resultPre = document.getElementById('resultado');
+      errorDiv.textContent = '';
+      resultPre.textContent = '';
+
+      // 1) Validar estado
+      const estado = this.estado.value.trim();
+      if (!estado) {
+        errorDiv.textContent = "❌ El campo 'estado' es requerido.";
+        return;
+      }
+
+      // 2) Validar criterio sort_by
+      const sortBy = this.sort_by.value.trim();
+      if (!['cantidad', 'ingresos'].includes(sortBy)) {
+        errorDiv.textContent = "❌ El campo 'sort_by' debe ser 'cantidad' o 'ingresos'.";
+        return;
+      }
+
+      // 3) Validar limit
+      const limitVal = parseInt(this.limit.value, 10);
+      if (!Number.isInteger(limitVal) || limitVal < 1) {
+        errorDiv.textContent = "❌ El campo 'limit' debe ser un entero mayor que cero.";
+        return;
+      }
+
+      // 4) Enviar al servidor
+      const payload = { estado, sort_by: sortBy, limit: limitVal };
+      try {
+        const resp = await fetch('{{ url_for("pipeline_pedidos") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if (!resp.ok) {
+          errorDiv.textContent = data.error || '❌ Error en la consulta.';
+        } else if (data.resultado) {
+          resultPre.textContent = JSON.stringify(data.resultado, null, 2);
+        } else {
+          errorDiv.textContent = data.error || '❌ Sin resultados.';
+        }
+      } catch (err) {
+        console.error(err);
+        errorDiv.textContent = '❌ No se pudo conectar con el servidor.';
+      }
+    });
+  </script>
+{% endblock %}

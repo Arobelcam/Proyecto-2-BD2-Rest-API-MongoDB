@@ -664,10 +664,199 @@ def eliminar_menu():
         return jsonify(resultado), 200
     return render_template('t_menu/eliminar_menu.html')
 
+
 ### LANDING PAGE PEDIDOS -----------------------------------------------------------------------------------------------------
 @app.route('/pedidos')
 def home_pedidos():
     return render_template('t_pedidos/pedidos.html')
+
+@app.route('/pedidos/crear_p', methods=['GET', 'POST'])
+def crear_pedidos():
+    if request.method == 'POST':
+        data = request.get_json()         # JSON enviado desde el cliente
+        resultado = crear_pedidos_servicio(data)
+        # Puedes devolver un status code 201 si creaste con éxito
+        return jsonify(resultado), 201
+    return render_template('t_pedidos/crear_pedidos.html')
+### CONSULTAS
+
+@app.route('/pedidos/consultas_p')
+def consultas_pedidos():
+    # esta será la landing de consultas: match vs aggregation
+    return render_template('t_pedidos/consultas_pedidos.html')
+
+### CONSULTAS A DOCUMENTOS
+@app.route('/pedidos/consultas_p/consul-documentos_p')
+def consultas_documentos_pedidos():
+    return render_template('t_pedidos/consultas_documentos_pedidos.html')
+
+# — Filtro —
+@app.route('/pedidos/consultas_p/consul-documentos_p/filtro_p', methods=['GET', 'POST'])
+def filtro_pedidos():
+    if request.method == 'POST':
+        resultado = get_pedidos_filtros_servicio()
+        return jsonify(resultado)
+    return render_template('t_pedidos/filtro_pedidos.html')
+
+# — Proyección —
+@app.route('/pedidos/consultas_p/consul-documentos_p/proyeccion_p', methods=['GET', 'POST'])
+def proyeccion_pedidos():
+    if request.method == 'POST':
+        resultado = get_pedidos_proyeccion_servicio()
+        return jsonify(resultado)
+    return render_template('t_pedidos/proyeccion_pedidos.html')
+
+# — Ordenamiento —
+@app.route('/pedidos/consultas_p/consul-documentos_p/ordenamiento_p', methods=['GET', 'POST'])
+def ordenamiento_pedidos():
+    if request.method == 'POST':
+        resultado = get_pedidos_ordenamiento_servicio()
+        return jsonify(resultado)
+    return render_template('t_pedidos/ordenamiento_pedidos.html')
+
+# — Limit —
+@app.route('/pedidos/consultas_p/consul-documentos_p/limit_p', methods=['GET', 'POST'])
+def limit_pedidos():
+    # Si es POST (desde formulario JSON) o viene el query param `limit`, devolvemos datos
+    if request.method == 'POST' or 'limit' in request.args:
+        resultado = get_pedidos_limit_servicio()
+        return jsonify(resultado)
+    # Si es GET sin limit, sirvo la página HTML
+    return render_template('t_pedidos/limit_pedidos.html')
+
+# — Skip —
+@app.route('/pedidos/consultas_p/consul-documentos_p/skip_p', methods=['GET', 'POST'])
+def skip_pedidos():
+    if request.method == 'POST' or 'skip' in request.args:
+        resultado = get_pedidos_skip_servicio()
+        return jsonify(resultado)
+    # Si es GET sin skips, sirvo la página HTML
+    return render_template('t_pedidos/skip_pedidos.html')
+
+
+### CONSULTAS POR AGREGACION
+@app.route('/pedidos/consultas_p/consul-agregacion_p')
+def consultas_agregacion_pedidos():
+    return render_template('t_pedidos/consultas_agregacion_pedidos.html')
+
+### simples
+@app.route('/pedidos/consultas_p/consul-agregacion_p/simple_p')
+def agregacion_simple_pedidos():
+    return render_template('t_pedidos/agregacion_simple_pedidos.html')
+
+# — Match —  
+@app.route('/pedidos/consultas_p/consul-agregacion_p/simple_p/match_p', methods=['GET', 'POST'])
+def match_pedidos():
+    if request.method == 'POST' or bool(request.args):
+        resultado = get_pedidos_match_servicio()
+        return jsonify(resultado)
+    return render_template('t_pedidos/match_pedidos.html')
+
+# — Group —  
+@app.route('/pedidos/consultas_p/consul-agregacion_p/simple_p/group_p', methods=['GET', 'POST'])
+def group_pedidos():
+    if request.method == 'POST' or bool(request.args):
+        resultado = get_pedidos_group_servicio()
+        return jsonify(resultado)
+    return render_template('t_pedidos/group_pedidos.html')
+
+# — Count — 
+@app.route('/pedidos/consultas_p/consul-agregacion_p/simple_p/count_p', methods=['GET', 'POST'])
+def count_pedidos():
+    # Si llega body JSON o query params no vacíos, llamamos al servicio
+    if request.method == 'POST' or bool(request.args):
+        # tu servicio lee request.get_json() o request.args
+        resultado = get_pedidos_count_servicio()
+        return jsonify(resultado)
+    return render_template('t_pedidos/count_pedidos.html')
+
+# — Distinct —
+@app.route('/pedidos/consultas_p/consul-agregacion_p/simple_p/distinct_p', methods=['GET', 'POST'])
+def distinct_pedidos():
+    if request.method == 'POST' or bool(request.args):
+        resultado = get_pedidos_distinct_servicio()
+        return jsonify(resultado)
+    return render_template('t_pedidos/distinct_pedidos.html')
+
+
+### agg pipeline
+@app.route('/pedidos/consultas_p/consul-agregacion_p/pipeline_p', methods=['GET','POST'])
+def pipeline_pedidos():
+    if request.method == 'POST':
+        # No necesitas leer aquí request.get_json() ni pasarlo al servicio
+        resultado = aggregation_pipeline_pedidos_servicio()
+        return jsonify(resultado), 200
+
+    # GET: renderizamos el formulario
+    return render_template('t_pedidos/pipeline_pedidos.html')
+
+### arrays
+@app.route('/pedidos/consultas_p/consul-agregacion_p/arrays_p')
+def agregacion_arrays_pedidos():
+    return render_template('t_pedidos/agregacion_arrays_pedidos.html')
+
+# — Push —
+@app.route('/pedidos/consultas_p/consul-agregacion_p/arrays_p/push_p', methods=['GET', 'POST'])
+def push_pedidos():
+    if request.method == 'POST':
+        resultado = push_pedido_servicio()
+        if isinstance(resultado, tuple):
+            payload, code = resultado
+            return jsonify(payload), code
+        return jsonify(resultado), 200
+    return render_template('t_pedidos/push_pedidos.html')
+
+# — Pull —
+@app.route('//pedidos/consultas_p/consul-agregacion_p/arrays_p/pull_p', methods=['GET', 'POST'])
+def pull_pedidos():
+    if request.method == 'POST':
+        resultado = pull_pedido_servicio()
+        if isinstance(resultado, tuple):
+            payload, code = resultado
+            return jsonify(payload), code
+        return jsonify(resultado), 200
+    return render_template('t_pedidos/pull_pedidos.html')
+
+# — AddToSet —
+@app.route('/pedidos/consultas_p/consul-agregacion_p/arrays_p/addToSet_p', methods=['GET', 'POST'])
+def add_to_set_pedidos():
+    if request.method == 'POST':
+        resultado = add_to_set_pedido_servicio()
+        if isinstance(resultado, tuple):
+            payload, code = resultado
+            return jsonify(payload), code
+        return jsonify(resultado), 200
+    return render_template('t_pedidos/add_to_set_pedidos.html')
+
+### embedded
+@app.route('/pedidos/consultas_p/consul-agregacion_p/embedded_p')
+def agregacion_embedded_pedidos():
+    return render_template('t_pedidos/agregacion_embedded_pedidos.html')
+
+@app.route('/pedidos/consultas_p/consul-agregacion_p/embedded_p/lookup_p', methods=['GET', 'POST'])
+def lookup_pedidos():
+    if request.method == 'POST':
+        resultado = lookup_pedidos_servicio()
+        return jsonify(resultado)
+    return render_template('t_pedidos/lookup_pedidos.html')
+
+#Actualizar articulo menu
+@app.route('/pedidos/actualizar_p', methods=['GET', 'PUT'])
+def actualizar_pedidos():
+    if request.method == 'PUT':
+        data = request.get_json()  
+        resultado = actualizar_pedidos_servicio(data)
+        return jsonify(resultado), 200
+    return render_template('t_pedidos/actualizar_pedidos.html')
+
+#Eliminar usuarios
+@app.route('/pedidos/eliminar_p', methods=['GET', 'DELETE'])
+def eliminar_pedidos():
+    if request.method == 'DELETE':
+        data = request.get_json()              
+        resultado = eliminar_pedidos_servicio(data)
+        return jsonify(resultado), 200
+    return render_template('t_pedidos/eliminar_pedidos.html')
 
 ### LANDING PAGE RESEÑAS -----------------------------------------------------------------------------------------------------
 @app.route('/reseñas')
